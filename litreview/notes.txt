@@ -1,0 +1,18 @@
+Talk about programming languages
+    Specifically about Domain Specific Language Design
+
+
+May want to talk about parser generators
+    Yacc and Lex specifically, along with the fact that this is a solved problem where as very few type checker generators
+
+^^ These are probably less important as they are not explicitly about type systems
+
+Talk about type systems in general along with the complexity of type systems
+    Type systems, so type rules, natural deduction logic
+    Type system safety
+
+Talk about type checkers
+    Type checkers, complex code, hand written, ad hoc
+
+Talk about type checker generators
+    Not many exist, Need to look at Ruler and Typical

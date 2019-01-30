@@ -1,0 +1,22 @@
+http://sadiyahameed.pbworks.com/f/deursen+-+DSL+annotated.pdf
+
+Well defined application domains: Type checking is our given domain
+
+Subroutine libraries, Object-orientated frameworks, and Domain Specific Languages
+
+Subroutine libraries: can be useful but having a concrete syntax and limits what can be a well formed type system since it has to belong to a given grammar
+
+Object-Orientated Framework: A continuation of subroutine libraries but using object orientation.
+
+Domain Specific Language: small usually declarative language that offers expressive power focused on a particular problem. DSL programs are translated to calls to a common subroutine library and the DSL can be viewed to hide the details of the library
+
+
+DSL: given definition: a DSL is a programming language that offers, through appropriate notations and abstractions, expressive power focused on and usually restricted to a particular problem domain
+
+focussed expressive power
+
+DSLs are small Languages
+
+They do however offer GPL as a sub language eg YACC
+
+
