@@ -19,4 +19,29 @@ DSLs are small Languages
 
 They do however offer GPL as a sub language eg YACC
 
+Application generator
+DSL application specific language
+
+Level of abstraction of the problem domain
+
+DSLs are self documenting
+
+productivity, reliability, maintain ability, portability. [27, 47, 38]
+
+limited availability of DSL's
+
+[49, 24]
+
+YACC, LEX [7]
+
+Systems software abstract syntax trees [77, 19, 51]
+
+[75]
+
+[52, 18]
+
+[1, 7]
+
+Also, error detection, static analysis, and optimizations can be done at the domain level, for example using an effect system as in [13].
+
 

@@ -1,7 +1,11 @@
 \documentclass{UoYCSproject}
-\addbibresource{dummyBib.bib}
+
+\usepackage{bussproofs}
+\usepackage{float}
+
+\addbibresource{ref.bib}
 \author{Steven M. Tomlinson}
-\title{Generating Type Checkers}
+\title{Generation of Type Checking Code}
 \date{2018-September-21}
 \supervisor{Jeremy L. Jacob}
 \BSc
@@ -10,23 +14,20 @@
 
 \acknowledgements{
   Something about stuff
-}
+  }
+  
+  % More definitions & declarations in example.ldf
+  \begin{document}
+  \pagenumbering{roman}
+  \maketitle
+  %\renewcommand*{\lstlistlistingname}{List of Listings}
+  %\lstlistoflistings
 
-% More definitions & declarations in example.ldf
+  \begin{summary}
+    Summary Talk
+  \end{summary}
 
-\begin{document}
-\pagenumbering{roman}
-\maketitle
-%\renewcommand*{\lstlistlistingname}{List of Listings}
-%\lstlistoflistings
-
-\begin{summary}
-Summary Talk
-\end{summary}
-
-\chapter{Introduction}
-\label{cha:Introduction}
-Important\cite{zobel2015writing}
+\input{chapters/introduction/Introduction.tex}
 
 
 \listoffigures

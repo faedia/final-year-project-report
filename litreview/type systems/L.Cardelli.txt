@@ -1,0 +1,7 @@
+http://www.cs.colorado.edu/~bec/courses/csci5535/reading/cardelli-typesystems.pdf
+
+Purpose of type systems is to prevent the occurrence of execution errors
+
+type soundness
+
+
