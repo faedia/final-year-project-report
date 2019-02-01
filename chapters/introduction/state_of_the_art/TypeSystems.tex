@@ -1,18 +1,50 @@
 \section{Type Systems}
+Before we can start discussing type checkers, we need to discuss the type systems which the checkers implement.
 
+The concept and implementation of type systems has existed for almost as long as the concept of higher level language to perform computation\cite{Backus:1978:HFI:960118.808380}.
 Many languages have a type system in one form or another with varying degrees of complexity.
 Ranging from relatively simple type systems in languages such as C to fairly complex and expressive type systems such as ones in Haskell and Agda.
 
-The concept and implementation of type systems has also existed for almost as long as the concept of higher level language to perform computation.
+We should define what a type systems is and how it differs from a type checker.
+A type systems is a specification of a given programming languages type rules\cite{cardelli1996type}.
+So from this we know that a type system is a specification and we can say that a type checker is an implementation of the specification.
+Cardelli goes on to say that, we should separate the two, and that a type system is part of the language specification and the type checker is part of the compilers implementation of the language\cite{cardelli1996type}.
+This is similar to the how we view the formal grammar is defined by the language, and the parser is how the compiler implements that formal grammar\cite{cardelli1996type}.
 
-What are Type Systems?
+\subsection{Usefulness of Type Systems}
+TODO: still need to do this section am moving on to natural deduction logic
 
+\subsection{Natural Deduction and Inference Rules}
 
+Much like how we have a formal representation for context free grammars as Backus-Naur form\cite{Backus1960,aho2003compilers,ranta2012implementing}, we also have a formal way of representing type systems and type rules.
+In the literature, the standard method we have of representing type systems and type rules is through the use of natural deduction rules\cite{cardelli1996type,ranta2012implementing}.
 
-\begin{figure}
+Natural deduction rules have a form of: given some premises we conclude the consequent\cite{prawitz2006natural,ranta2012implementing}, for example in figure \ref{fig:generalNatDectRule} the premises are denoted as $J_k$ and the consequent is denoted as $C$.
+
+\begin{figure}[H]
     \begin{prooftree}
         \AxiomC{$J_1\ J_2\ \ ..\ \ J_n$}
         \UnaryInfC{$C$}
     \end{prooftree}
-    \caption{Example of a natural deduction rule}
+    \caption{General form of a natural deduction rule}
+    \label{fig:generalNatDectRule}
+\end{figure}
+
+We can then use these Natural Deduction rules to specify the type rules in a given type system\cite{ranta2012implementing,cardelli1996type,barendregt_1991}.
+Figure \ref{fig:simpleTypeRule} is an example of how we would write a simple type rule for an arithmetic expression using the previously discussed natural deduction logic.
+It is important to break this rule into its constituent parts to understand what it is trying to say.
+Starting from the consequent $\Gamma \vdash e_1 + e_2 : Int$, $\Gamma$ is the current context which we are applying the rule to.
+The $\vdash$ is piece of syntax to say given the left hand side we must prove the right hand side.
+Finally for the consequent $e_1 + e_2 : Int$ means that the piece of concrete syntax $e_1 + e_2$ must have type $Int$.
+The top half of the rule are the things that must hold for the bottom half to be valid.\
+So simply $e_1$ must be of type $Int$ given the context $\Gamma$, and the same is for the second premise\cite{cardelli1996type,ranta2012implementing,barendregt_1991}.
+
+\begin{figure}[H]
+    \begin{prooftree}
+        \AxiomC{$\Gamma \vdash e_1 : Int$}
+        \AxiomC{$\Gamma \vdash e_2 : Int$}
+        \BinaryInfC{$\Gamma \vdash e_1 + e_2 : Int$}
+    \end{prooftree}
+    \caption{Simple arithmetic expression type rule}
+    \label{fig:simpleTypeRule}
 \end{figure}
