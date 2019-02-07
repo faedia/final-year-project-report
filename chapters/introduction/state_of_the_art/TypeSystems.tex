@@ -14,7 +14,7 @@ This is similar to the how we view the formal grammar is defined by the language
 \subsection{Usefulness of Type Systems}
 TODO: still need to do this section am moving on to natural deduction logic
 
-\subsection{Natural Deduction and Inference Rules}
+\subsection{Type Rules}
 
 Much like how we have a formal representation for context free grammars as Backus-Naur form\cite{Backus1960,aho2003compilers,ranta2012implementing}, we also have a formal way of representing type systems and type rules.
 In the literature, the standard method we have of representing type systems and type rules is through the use of natural deduction rules\cite{cardelli1996type,ranta2012implementing}.
@@ -30,14 +30,14 @@ Natural deduction rules have a form of: given some premises we conclude the cons
     \label{fig:generalNatDectRule}
 \end{figure}
 
-We can then use these Natural Deduction rules to specify the type rules in a given type system\cite{ranta2012implementing,cardelli1996type,barendregt_1991}.
+We can then use these Natural Deduction rules to specify the type rules in a given type system\cite{ranta2012implementing,cardelli1996type,}.
 Figure \ref{fig:simpleTypeRule} is an example of how we would write a simple type rule for an arithmetic expression using the previously discussed natural deduction logic.
-It is important to break this rule into its constituent parts to understand what it is trying to say.
+It is important to break this rule into its constituent parts to understand what it is trying to specify.
 Starting from the consequent $\Gamma \vdash e_1 + e_2 : Int$, $\Gamma$ is the current context which we are applying the rule to.
 The $\vdash$ is piece of syntax to say given the left hand side we must prove the right hand side.
 Finally for the consequent $e_1 + e_2 : Int$ means that the piece of concrete syntax $e_1 + e_2$ must have type $Int$.
 The top half of the rule are the things that must hold for the bottom half to be valid.\
-So simply $e_1$ must be of type $Int$ given the context $\Gamma$, and the same is for the second premise\cite{cardelli1996type,ranta2012implementing,barendregt_1991}.
+So simply $e_1$ must be of type $Int$ given the context $\Gamma$, and the same is for the second premise\cite{cardelli1996type,ranta2012implementing}.
 
 \begin{figure}[H]
     \begin{prooftree}
