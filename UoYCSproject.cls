@@ -47,7 +47,6 @@
 \RequirePackage{scrhack}
 \RequirePackage[toc,page]{appendix}{
 \RequirePackage{graphicx}
-
 \RequirePackage[T1]{fontenc} % prevents < in text mode turning into
 \RequirePackage{textcomp}    % ?', etc
 \RequirePackage[osf]{mathpazo} % Palatino font

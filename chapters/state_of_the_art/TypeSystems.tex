@@ -5,14 +5,14 @@ The concept and implementation of type systems has existed for almost as long as
 Many languages have a type system in one form or another with varying degrees of complexity.
 Ranging from relatively simple type systems in languages such as C to fairly complex and expressive type systems such as ones in Haskell and Agda.
 
-We should define what a type systems is and how it differs from a type checker.
 A type systems is a specification of a given programming languages type rules\cite{cardelli1996type}.
 So from this we know that a type system is a specification and we can say that a type checker is an implementation of the specification.
 Cardelli goes on to say that, we should separate the two, and that a type system is part of the language specification and the type checker is part of the compilers implementation of the language\cite{cardelli1996type}.
 This is similar to the how we view the formal grammar is defined by the language, and the parser is how the compiler implements that formal grammar\cite{cardelli1996type}.
 
 \subsection{Usefulness of Type Systems}
-TODO: still need to do this section am moving on to natural deduction logic
+\todo{Need to research}
+
 
 \subsection{Type Rules}
 
@@ -23,6 +23,8 @@ Natural deduction rules have a form of: given some premises we conclude the cons
 
 \begin{figure}[H]
     \begin{prooftree}
+        \LeftLabel{Rule Label:\quad}
+        \RightLabel{$[Side\ Condition]$}
         \AxiomC{$J_1\ J_2\ \ ..\ \ J_n$}
         \UnaryInfC{$C$}
     \end{prooftree}
@@ -34,13 +36,14 @@ We can then use these Natural Deduction rules to specify the type rules in a giv
 Figure \ref{fig:simpleTypeRule} is an example of how we would write a simple type rule for an arithmetic expression using the previously discussed natural deduction logic.
 It is important to break this rule into its constituent parts to understand what it is trying to specify.
 Starting from the consequent $\Gamma \vdash e_1 + e_2 : Int$, $\Gamma$ is the current context which we are applying the rule to.
-The $\vdash$ is piece of syntax to say given the left hand side we must prove the right hand side.
+The $\vdash$ is piece of syntax to say given the left hand side we can prove the right hand side.
 Finally for the consequent $e_1 + e_2 : Int$ means that the piece of concrete syntax $e_1 + e_2$ must have type $Int$.
 The top half of the rule are the things that must hold for the bottom half to be valid.\
 So simply $e_1$ must be of type $Int$ given the context $\Gamma$, and the same is for the second premise\cite{cardelli1996type,ranta2012implementing}.
 
 \begin{figure}[H]
     \begin{prooftree}
+        \LeftLabel{Add Expression:\quad}
         \AxiomC{$\Gamma \vdash e_1 : Int$}
         \AxiomC{$\Gamma \vdash e_2 : Int$}
         \BinaryInfC{$\Gamma \vdash e_1 + e_2 : Int$}

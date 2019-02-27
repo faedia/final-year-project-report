@@ -1,0 +1,16 @@
+Design of a domain specific language.
+    Want to represent the form of natural deduction rules.
+    Want to note on the fact that this is a similarity to how Flex and Bison represent BNF grammar notation
+    Also want to have extra code similar to Flex and Bison
+    we want to represent changes with context and and ability to define side condition, (In the future we may be able to have our own language to represent common conditions)
+    atm we wil want to use haskell
+    user define context and helper functions.
+    description of grammar and reasons for the layout and structure
+    reasoning for why DSL makes sense
+
+Code Generation
+    Need to think about the algorithms used:
+        IPL book!
+        Need to talk about the first one did a single pass no checking that the rules were written correctly
+        poor error reporting
+        Talk about hindly milner algorithm
