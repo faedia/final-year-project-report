@@ -1,9 +1,128 @@
 \appendix
-\chapter{N Language}
-The N language is a test case language to express the features that the tool can generate code for.
+\chapter{Ad Language}
+The Ad language is a test case language to express the features that the tool can generate code for.
 It is a simple imperative language.
 \section{Grammar}
+\begin{grammar}
+    <FuncDecl> ::= "function" <Ident> "(" <ListVarDecl> ")"
+    \\"return" <TypeName> <Block>
+    
+    <ProcDecl> ::= "procedure" <Ident> "(" <ListVarDecl> ")"
 
+    <VarDecl> ::= <Ident> ":" <TypeName>
+
+    <ListVarDecl> ::= $\epsilon$ | <VarDecl> | <VarDecl> ";" <ListVarDecl>
+
+    <Block> ::= "declare" <ListDecl> "begin" <ListStmnt> "end";
+
+    <Decl> ::= <FuncDecl> | <ProcDecl> | <VarDecl>
+
+    <ListDecl> ::= $\epsilon$ | <Decl> ";" <ListDecl>
+
+    <Stmnt> ::= "null"
+    \alt "print" <Expr>
+    \alt <Ident> ":=" <Expr>
+    \alt "if" <Expr> "then" <ListStmnt> "else" <ListStmnt> "end"
+    \alt <Block>
+    \alt Ident "(" <ListExpr> ")"
+
+    <ListStmnt> ::= <Stmnt> ";" | <Stmnt> ";" <ListStmnt>
+
+    <Expr> ::= <Integer> | "true" | "false" | "(" <Expr> ")"
+    \alt <Ident> "(" <ListExpr> ")" | "neg" <Expr> | "not" <Expr>
+    \alt <Expr> "*" <Expr> | <Expr> "and" <Expr>
+    \alt <Expr> "+" <Expr> | <Expr> "or" <Expr>
+    \alt <Expr> "=" <Expr> | <Expr> "<" <Expr>
+
+    <ListExpr> ::= $\epsilon$ | <Expr> | <Expr> "," <ListExpr>
+
+    <TypeName> ::= "bool" | "int"
+\end{grammar}
 \section{LBNF Grammar}
+\begin{lstlisting}
+Prog.    Program ::= FuncDecl;
+FDecl.   FuncDecl ::= "function" Ident "(" [VarDecl] ")" 
+    "return" TypeName Block;
+PDecl.   ProcDecl ::= "procedure" Ident "(" [VarDecl] ")" Block;
+VDecl.   VarDecl  ::= Ident ":" TypeName; 
+separator VarDecl ";";
+
+Blck.    Block ::= "declare" [Decl] "begin" [Stmnt] "end";
+
+DFunc.   Decl ::= FuncDecl;
+DProc.   Decl ::= ProcDecl;
+DVar.    Decl ::= VarDecl;
+terminator Decl ";";
+
+SNull.   Stmnt ::= "null";
+SPrint.  Stmnt ::= "print" Expr;
+SAssign. Stmnt ::= Ident ":=" Expr;
+SIf.     Stmnt ::= "if" Expr "then" [Stmnt] "else" [Stmnt] "end";
+SWhile.  Stmnt ::= "while" Expr "do" [Stmnt] "end";
+SBlock.  Stmnt ::= Block;
+SCall.   Stmnt ::= Ident "(" [Expr] ")";
+terminator nonempty Stmnt ";";
+
+EInt.    Expr4 ::= Integer;
+ETrue.   Expr4 ::= "true";
+EFalse.  Expr4 ::= "false";
+
+ECall.   Expr3 ::= Ident "(" [Expr] ")";
+ENeg.    Expr3 ::= "neg" Expr4;
+ENot.    Expr3 ::= "not" Expr4;
+
+EMul.    Expr2 ::= Expr2 "*" Expr3;
+EAnd.    Expr2 ::= Expr2 "and" Expr3;
+
+EAdd.    Expr1 ::= Expr1 "+" Expr2;
+EOr.     Expr1 ::= Expr1 "or" Expr2;
+
+EEq.     Expr  ::= Expr "=" Expr1;
+ELT.     Expr  ::= Expr "<" Expr1;
+coercions Expr 4;
+separator Expr ",";
+
+TNBool.  TypeName ::= "bool";
+TNInt.   TypeName ::= "int";   
+\end{lstlisting}
 \section{AST Types}
-\section{Type Rules}
+\begin{lstlisting}
+newtype Ident = Ident String
+data Program = Prog FuncDecl
+
+data FuncDecl = FDecl Ident [VarDecl] TypeName Block
+
+data ProcDecl = PDecl Ident [VarDecl] Block
+
+data VarDecl = VDecl Ident TypeName
+
+data Block = Blck [Decl] [Stmnt]
+
+data Decl = DFunc FuncDecl | DProc ProcDecl | DVar VarDecl
+
+data Stmnt
+    = SNull
+    | SPrint Expr
+    | SAssign Ident Expr
+    | SIf Expr [Stmnt] [Stmnt]
+    | SWhile Expr [Stmnt]
+    | SBlock Block
+    | SCall Ident [Expr]
+    deriving (Eq, Ord, Show, Read)
+
+data Expr
+    = EInt Integer
+    | ETrue
+    | EFalse
+    | ECall Ident [Expr]
+    | ENeg Expr
+    | ENot Expr
+    | EMul Expr Expr
+    | EAnd Expr Expr
+    | EAdd Expr Expr
+    | EOr Expr Expr
+    | EEq Expr Expr
+    | ELT Expr Expr
+
+data TypeName = TNBool | TNInt
+\end{lstlisting}

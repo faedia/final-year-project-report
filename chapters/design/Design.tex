@@ -2,5 +2,5 @@
 I decided that I would design and implement a Domain Specific Language to specify type systems, such that the language is analogous to the natural deduction rules used to define type systems in the mathematics.
 This appeared to make the most sense as other parts of the compiler pipeline already have domain specific languages which are used to generate code.
 
-\input{chapters/design/Grammar.tex}
-\input{chapters/design/CodeGeneration.tex}
+The domain specific language, rather than using the concrete syntax that is used in the natural deduction rules, uses the abstract syntax provided by the user to define the type rules.
+Type rules in the language have a similar form to the natural deduction rules, such that there would be a rule name provided followed by some judgements and then the consequent.
