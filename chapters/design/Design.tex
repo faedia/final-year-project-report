@@ -4,3 +4,137 @@ This appeared to make the most sense as other parts of the compiler pipeline alr
 
 The domain specific language, rather than using the concrete syntax that is used in the natural deduction rules, uses the abstract syntax provided by the user to define the type rules.
 Type rules in the language have a similar form to the natural deduction rules, such that there would be a rule name provided followed by some judgements and then the consequent.
+This provides a common way of representing type rules even if the way of writing the rules for the DSL use an ascii representation of the natural deduction logic.
+
+The code we are generating is based off of the type checking and type inference algorithm described in Implementing Programming Languages\cite{ranta2012implementing}.
+This is because the code algorithms used are simple yet powerful enough to express common forms of types rules, such as arithmetic expressions and the use of functions and variables.
+It also makes generating the code quite simple as there is a, more or less, direct translation of type rule to a function in the algorithm.
+
+The code we will be generating will be haskell code, since we can use the features in the haskell language such as pattern matching and the use of monads to help produce relatively simple code from a given type specification.
+
+I will go on to explain how the language is used, why certain design decisions were made and what code is generated from the input source.
+This will all be demonstrated using the witness language defined in appendix \ref{appendix:AdLanguage}.
+This language is a simple imperative language similar in design to that of Ada.
+
+\section{JET Language}
+
+\subsection{Initial Inline Haskell}
+When writing the rules in the DSL, called JET, you first must write a piece of haskell at the start.
+This will be put inline at the top of the generated output.
+This is useful to define functions and types that will be need later on by the type rules.
+For example, it is the place where you would want to define the structure of the context of the type system, along with helper functions to interact with the context in some way.
+It also allows the ability to import other modules, this means that you can import the Abstract Syntax definition that may be defined in a separate haskell module.
+The inline haskell takes the form of \texttt{\{$Code$\}} and a user can write any haskell code they like here.
+An example use of this will be to define the module head, along with the context type definition, and a series of function to be used later to make the type checking easier such as retrieving type from the context.
+One such code example can be seen in listing \ref{lst:topInlineCode}.
+There are other areas in the language where it is possible to write inline haskell (The code will be generated in different places) and these will also follow the same form as just mentioned to remain consistent as possible.
+
+\begin{lstlisting}[caption = Example of the inline code to be generated at the top, label=lst:topInlineCode]
+{
+module AdTypeChecker where
+
+import AbsAd;
+
+data SubProgram = SPProc Ident [TypeName] 
+    | SPFunc Ident [TypeName] TypeName
+type Context = ([SubProgram], (Ident, TypeName))
+
+subProgramGetIdent :: SubProgram -> Ident
+subProgramGetIdent (SPProc ident _) = ident
+subProgramGetIdent (SPFunc ident _ _) = ident
+
+-- Other functions for use in the rest of the type system
+}
+\end{lstlisting}
+
+The listing above is a snippet of the the inline code that is used for the JET type rules for the Ad language defined appendix \ref{appendix:AdLanguage}.
+Here we define the context to be both a list of subprograms (procedures and functions) and a list identifiers associated with a type.
+We also make sure we import the abstract syntax module so that we have access to the types that we need.
+
+Having this inline code allows the definition of much more complicated functions to interact and perform type checks that would not be feasible to write in and inline Type Premise (This will be covered in the upcoming section), as this part is solely dedicated to haskell code.
+It also allows the user to have any haskell modules be able to be accessible if they may need them, otherwise there would be nowhere else that a user could import a haskell module into the generated code. 
+
+\subsection{Type Rule Format}
+\todo{The grammar is subject to change over the period of the project}
+
+The format of the type rules is extremely similar to the way we represent type rules in the natural deduction logic.
+This allows for simple translation of a natural deduction type rule into one of the type rules written in the DSL.
+We delve into more detail about the format of the type rules, but the basic structure of the type rules is as follows
+\begin{grammar}
+<Rule> ::= "type" <Identifier> "<-" ("If" <TypePremiseList> "then") 
+    \\ <Context> "|-" <Judgement>
+\end{grammar}
+
+As can be seen, the TypePremiseList is the eqThis gives equivalent to the type premises in natural deduction logic.
+The following part is the definition of the consequent written in our type rule system, and again is very similar to natural deduction logic.
+The grammar is designed to replicate as much as possible from the natural deduction rules as they are an already accepted way of formally representing type rules.
+
+The formal grammar can be seen in appendix \ref{appendix:jetLanguage}.
+
+\section{Simple Type Rules}
+\subsection{Null Statement Type Rule}
+The simplest type rule that we can represent is one similar to the one shown in figure \ref{fig:adnullt}.
+This is a type rule with no premises to check, along with no type to check for the consequent.
+So all we need to do on entering the function to check this statement is to return immediately.
+
+An example of this rule being written in our DSL can be seen in listing \ref{lst:jetAdNullT}
+\begin{lstlisting}[caption = Jet type rule for null statement, label=lst:jetAdNullT]
+type AdNullT <- {ctx} |- (Stmnt SNull);
+\end{lstlisting} 
+
+The first part \texttt{type AdNullT} has no affect on the rule and is just a name of the rule for use in documentation purposes.
+The next bit after the left facing arrow is the definition of the context.
+In the natural deduction system the context variable is denoted by $\Gamma$, in my language I have decided to denote the context variable as \texttt{ctx}.
+You define the context by writing a piece of haskell code which returns a new context, in the case of many rules this will just be the case of returning the current context.
+This allows the context to be changed as we type check the system, for example if we were to declare a new variable we would want that variable to be added to the context and the inline haskell allows that.
+Since the null statement does nothing we want to return the context that we started with.
+The next piece of syntax after the turn pipe symbol is analogous to the concrete syntax used in the natural deduction form of type rule to define the consequent.
+However, since we have parsed the input string we can then use the abstract syntax to define the rule.
+We write the consequent as the abstract syntax type name that you want to check followed by the constructor of that type you want to check, hence why for this example it is \texttt{Stmnt SNull} to check a null statement.
+We need the AST node name so that we can form the generated code correctly, we also need the constructor so that we can use Haskell's features of pattern matching to match against the constructor we intend to check.
+
+When our tool processes this node, it identifies that there are no premises needed to be processed before processing the consequent.
+It also identified that that there is no type to check or infer when processing the consequent so it can return the context with no need to any other processing.
+This also tells us that there will be no infer method required for this kind of type rule, since the consequent does not have a type associated with it.
+From this we produce the code shown in listing \ref{lst:codeAdNullT}.
+\begin{lstlisting}[caption = Code generated from rule AdNullT, label=lst:codeAdNullT]
+checkStmnt SNull ctx = do
+    Ok (ctx)
+\end{lstlisting}
+
+\subsection{Literal Expression Type Rule}
+Literal Expression type rules are similar to null statement rules as they have no premises and have no affect on the context.
+The only difference is that Literal Expressions have types where as a null statement does not so the code we generate has to take that into account.
+The natural deduction rule for one of these expressions can been seen in figure \ref{fig:adtruet}.
+A way of representing this using our DSL can be seen from \ref{lst:jetAdTrueT}
+\begin{lstlisting}[caption = Jet type rule for true expression, label=lst:jetAdTrueT]
+type AdTrueT <- {ctx} |- (Expr ETrue) TBool;
+\end{lstlisting}
+
+As can be seen the difference between this and the null statement example is that now the piece of abstract syntax we want to process has changed along with the addition that we now give a type that is associated with this piece of abstract syntax.
+
+Since we now have type associated with the rule this changes the type of code we must generate.
+For example we did not have to check the type of the null statement because there was no type for the null statement.
+We also did not have to generate an infer function as there was no function to infer.
+However, since this rule has a type when we perform a check we want to make sure that the type we are checking is the same as the type we are expecting for this rule.
+
+Also because we have a type we can now generate an infer function.
+Infer functions are used in type inference to return a type of a piece of abstract syntax so that is can be used in later analysis.
+For example if we were assigning to a variable, then we would want to make sure that the variable and the expression being assigned to the variable have the same type.
+This would be done by inferring the type of one of them to check the other, for example we could infer the type of the variable and check that the expression was also of that type.
+
+We then produce code seen in listing \ref{lst:codeAdTrueT} that meets these criteria.
+As can be seen it is checking the input type is the same as the type in the rule.
+Also, upon an infer it returns the type that is defined by the rule.
+\begin{lstlisting}[caption = Code Generated from rule AdTrueT, label=lst:codeAdTrueT]
+checkExpr ETrue jetCheckType ctx = do
+    if jetCheckType == TTrue then 
+        Ok (ctx) 
+    else 
+        Bad "Inconsistent Types"
+inferExpr ETrue ctx = do
+    Ok TTrue
+\end{lstlisting}
+
+\section{Type Rules Requiring Premises}
+\section{Type Rules As Lists of Nodes}

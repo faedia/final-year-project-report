@@ -1,5 +1,11 @@
 \appendix
+
+\chapter{JET Language}
+\label{appendix:jetLanguage}
+\section{Grammar}
+
 \chapter{Ad Language}
+\label{appendix:AdLanguage}
 The Ad language is a test case language to express the features that the tool can generate code for.
 It is a simple imperative language.
 \section{Grammar}
@@ -23,6 +29,7 @@ It is a simple imperative language.
     \alt "print" <Expr>
     \alt <Ident> ":=" <Expr>
     \alt "if" <Expr> "then" <ListStmnt> "else" <ListStmnt> "end"
+    \alt "while" <Expr> "do" <ListStmnt> "end"
     \alt <Block>
     \alt Ident "(" <ListExpr> ")"
 
@@ -85,7 +92,7 @@ separator Expr ",";
 TNBool.  TypeName ::= "bool";
 TNInt.   TypeName ::= "int";   
 \end{lstlisting}
-\section{AST Types}
+\section{AST}
 \begin{lstlisting}
 newtype Ident = Ident String
 data Program = Prog FuncDecl
@@ -126,3 +133,24 @@ data Expr
 
 data TypeName = TNBool | TNInt
 \end{lstlisting}
+
+\section{Type Rules}
+\begin{figure}[H]
+    \begin{prooftree}
+        \LeftLabel{AdNullT}
+        \AxiomC{}
+        \UnaryInfC{$\Gamma \vdash \lfloor null \rfloor\ valid$}
+    \end{prooftree}
+    \caption{Type rule for null statement}
+    \label{fig:adnullt}
+\end{figure}
+
+\begin{figure}[H]
+    \begin{prooftree}
+        \LeftLabel{AdTrueT}
+        \AxiomC{}
+        \UnaryInfC{$\Gamma \vdash true : TBool$}
+    \end{prooftree}
+    \caption{Type rule for true literal expression}
+    \label{fig:adtruet}
+\end{figure}
