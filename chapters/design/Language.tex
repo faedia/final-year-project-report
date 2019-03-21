@@ -1,0 +1,11 @@
+\section{The JET Language}
+
+JET allows the user to write type rules that will be generated into Haskell code.
+In order to do that the user may have to write some Haskell code in an initial section.
+For this reason JET consists of two parts: some Haskell code in an initial section, followed by a list of type rules.
+
+In order to write a type system in JET, the user will also be proved with a Haskell type class that defines a number of functions that will be useful when interacting with the context, such as looking up a variable in the context and adding an item to the context.
+This type class has been written in such a way to support as many contexts as possible as to not limit what type of languages JET supports.
+Along with the type class, there will also be an example of how to implement an instance of the type class using a Haskell map as an example.
+
+\subsection{Initial Inline Haskell}

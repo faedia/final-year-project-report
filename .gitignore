@@ -13,3 +13,6 @@
 *.synctex.gz
 *.toc
 .directory
+TypeChecker.out.ps
+TypeChecker.lol
+TypeChecker.dvi
