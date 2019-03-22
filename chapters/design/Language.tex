@@ -9,3 +9,43 @@ This type class has been written in such a way to support as many contexts as po
 Along with the type class, there will also be an example of how to implement an instance of the type class using a Haskell map as an example.
 
 \subsection{Initial Inline Haskell}
+The code that comes at the top of a JET type specification is a block of inline Haskell code.
+This will be put inline at the top of the generated output code.
+This is where a user can define useful functions and types that will be needed later.
+For example this is where a user can define the type for the context along with defining the instance of the type class JetContext for the users custom context type.
+It also allows for the ability to import any other haskell modules, this means that the user can import their Abstract Syntax Definition for that language that may be defined in a separate Haskell module.
+The inline Haskell takes the form of $\{Code\}$ and a user can write any Haskell code they like here.
+An example use of of this will be to define the module header, along with the context type declaration, and a instance of the JetContext type class using the context the user has declared.
+One such example can be seen in \autoref{lst:inlineHaskellCode}, the listing is an abbreviated example of what appears in the JET type specification for the Ad language which can be seen in \autoref{appendix:AdLanguage}.
+Here we define the context to be a 4-tuple which contains the current return type of the current subprogram, along with three namespaces, one for procedures; one for functions; and one for variables.
+These namespaces utilise the JetContextMap provided to the user.
+JetContextMap is a list of Maps, where each Map is a scope in the code.
+The instance of JetContext for JetContextMap is already defined for the user an example of how to define an instance of JetContext.
+The example does not include full definitions for the functions and type classes, full definitions for JetContext can be seen in \autoref{appendix:jetLanguage}
+
+\begin{lstlisting}[caption = Example of initial inline haskell code, label=lst:inlineHaskellCode]
+{
+module TypeAd where
+
+Import AbsAd
+newtype Context = Context (Type, 
+    JetContextMap (Ident, [Type]) Type, 
+    JetContextMap (Ident, [Type]) Type, 
+    JetContextMap Ident Type)
+instance JetContextBase Context where
+    emptyContext = 
+        Context (TNNone, emptyContext, ...)
+    ...
+instance JetContext Context ContextKey Type where
+    lookupContext (P ident ts) (Context (_, p, _, _)) 
+        = lookupContext (ident, ts) p
+    ...
+updateRetType :: Context -> Type -> Context
+-- Other useful functions and definitions
+}
+\end{lstlisting}
+
+Having this inline code allows the user to specify exactly how they wish the context to function.
+It also allows for a set of standard functions that the user can use to interact with the context, along with adding their own custom functions if and when they need them.
+
+\subsection{Type Rule Format}
