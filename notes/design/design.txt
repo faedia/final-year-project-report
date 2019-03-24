@@ -14,3 +14,16 @@ Code Generation
         Need to talk about the first one did a single pass no checking that the rules were written correctly
         poor error reporting
         Talk about hindly milner algorithm
+
+
+Unit Variables: Easily Modelled as TNNone
+Sequencing == t1 : t2 : t2
+    Issues occurs what happens to the context between t1 and t2
+
+We can model all of these using the current features in JET
+
+Record Types: We will need somewhere in the context to store identifiers for types
+    We will need to be able to resolve types
+    We will then need to be able to resolve an identifier name for a record item access and get its resulting type
+
+lookupExtract
