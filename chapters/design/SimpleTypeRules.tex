@@ -1,0 +1,12 @@
+\section{Simple Type Rules}
+\subsection{Null Statement Type Rule}
+The simplest type rule that we can represent is similar to the one shown in \autoref{fig:adnullt}.
+This is a type rule with no premises to check, along with no types to check for the consequent.
+Simply, if we have done a successfully parsed this statement, then it will always pass its type check.
+Therefore the only code we need to generate is whatever needs to be returned back to the parent.
+In this case we don't need to return anything, however there maybe cases in other languages where we would want to return the context back to the parent.
+
+An example of rule such as this written in JET can be seen in \autoref{lst:jetAdNullT}
+\begin{lstlisting}[caption = Jet type rule for null statement, label=lst:jetAdNullT]
+typerule AdNullT <- (Stmnt SNull) return {return ()}
+\end{lstlisting}

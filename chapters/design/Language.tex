@@ -49,3 +49,22 @@ Having this inline code allows the user to specify exactly how they wish the con
 It also allows for a set of standard functions that the user can use to interact with the context, along with adding their own custom functions if and when they need them.
 
 \subsection{Type Rule Format}
+\todo{The grammar is subject to change, this may be in state of flux for a while}
+
+The format of the type rules is extremely similar to the way we represent type rules in the natural deduction logic.
+This allows for simple translation of a natural deduction type rule into one of the type rules written in JET.
+We will delve into more detail about the format of the type rules, but the basic structure of the type rules is as follows
+
+\begin{grammar}
+    <Rule> ::= `typerule' <Identifier> `<-' ( `if' <TypePremiseList> `then' ) <TypePremise> `return' <InlineHaskell>
+\end{grammar}
+
+The type premise list encased within the if-then is the list of judgments to prove the consequent.
+It is possible for a type rule to require no judgments to prove the consequent so the if-then is optional, therefore, the type premise list can be forced to be nonempty.
+The type premise after the if-then is the consequent we are trying to prove.
+We then have a return keyword followed by some inline Haskell.
+The reason for this will become more apparent later, but simply the type rule may want to return some more information back up the tree.
+For example, if we were type checking a list of statements and we have just seen a declaration for a variable, we will then want to add that variable to the context so that in later statements we have access to the variable's type information.
+In this situation we would want to return the new context to the parent so that it can give the new context to the next statement in the list of statements.
+The grammar of JET is designed to replicate as much as possible from the natural deduction rules as they are an already accepted way of formally representing type rules.
+The formal grammar can be seen in its entirety in \autoref{appendix:jetLanguage}.
