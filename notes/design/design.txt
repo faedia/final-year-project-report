@@ -27,3 +27,5 @@ Record Types: We will need somewhere in the context to store identifiers for typ
     We will then need to be able to resolve an identifier name for a record item access and get its resulting type
 
 lookupExtract
+
+after initial draft submission, look at implementing newtype

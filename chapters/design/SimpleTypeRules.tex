@@ -1,6 +1,6 @@
 \section{Simple Type Rules}
 \subsection{Null Statement Type Rule}
-The simplest type rule that we can represent is similar to the one shown in \autoref{fig:adnullt}.
+The simplest type rule that we can represent is similar to the one shown in \autoref{fig:adnullt} for our example of an imperative language.
 This is a type rule with no premises to check, along with no types to check for the consequent.
 Simply, if we have done a successfully parsed this statement, then it will always pass its type check.
 Therefore the only code we need to generate is whatever needs to be returned back to the parent.
@@ -10,3 +10,27 @@ An example of rule such as this written in JET can be seen in \autoref{lst:jetAd
 \begin{lstlisting}[caption = Jet type rule for null statement, label=lst:jetAdNullT]
 typerule AdNullT <- (Stmnt SNull) return {return ()}
 \end{lstlisting}
+
+The initial part \texttt{type AdNullT} has no affect on the rule is just a name of the rule for a use in future documentation.
+The following part after the left facing arrow is the piece of abstract syntax that we wish to pattern match against.
+This is analogous to the concrete syntax used to define the consequent in the natural deduction logic.
+The abstract syntax definition takes the form of the type of abstract syntax we wish to check followed by the constructor we want to pattern match against, hence why for this example it is \texttt{Stmnt SNull} since we wish to check a statement and the specific statement is the null statement.
+We need the AST node type name so that we can form the generated code correctly, we also need the constructor so that we can use Haskell's features of pattern matching to match against the correct piece of syntax.
+
+From this type rule we produce the code that can be seen in \autoref{lst:codeAdNullT}.
+we generate the name of the function based off of the AST node type name given.
+Also notice that since the type rule contained no information about resulting type of the rule no code was produced to do any type checking.
+This also means that there is no need to generate a function to infer the type given by this rule as there is no type associated with the rule, therefore, we do not generate the function to do such a type inference.
+Therefore, the only thing the code does is pattern match against the piece of specified syntax and return an empty tuple since Statement rules in the language do not affect the context in any way.
+
+\begin{lstlisting}[caption = Code generated from AdNullT, label=lst:codeAdNullT]
+checkStmnt SNull ctx = do
+    return ()
+\end{lstlisting}
+
+One possible improvement to be made in the code is instead of generating code of the form \texttt{foo astNode ctx} is to instead generate code to be of the form \texttt{foo ctx astNode}.
+That way if we have multiple multiple instances of \texttt{foo ctx}, then we can give that expression a name and only evaluate it once.
+However, there is one possible instance where having \texttt{ctx} be last argument has an advantage which can be seen at \todo{autoref to monad context binding}.
+
+\subsection{Literal Expression Type Rule}
+Both of our test languages have literal expressions.

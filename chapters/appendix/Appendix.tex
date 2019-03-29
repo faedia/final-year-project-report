@@ -4,95 +4,12 @@
 \label{appendix:jetLanguage}
 \section{Grammar}
 
-\chapter{Ad Language}
-\label{appendix:AdLanguage}
+\chapter{Witness Languages}
+\label{appendix:witnessLanguages}
+\section{Ad Language}
 The Ad language is a test case language to express the features that the tool can generate code for.
 It is a simple imperative language.
-\section{Grammar}
-\begin{grammar}
-    <FuncDecl> ::= "function" <Ident> "(" <ListVarDecl> ")"
-    \\"return" <TypeName> <Block>
-    
-    <ProcDecl> ::= "procedure" <Ident> "(" <ListVarDecl> ")"
-
-    <VarDecl> ::= <Ident> ":" <TypeName>
-
-    <ListVarDecl> ::= $\epsilon$ | <VarDecl> | <VarDecl> ";" <ListVarDecl>
-
-    <Block> ::= "declare" <ListDecl> "begin" <ListStmnt> "end";
-
-    <Decl> ::= <FuncDecl> | <ProcDecl> | <VarDecl>
-
-    <ListDecl> ::= $\epsilon$ | <Decl> ";" <ListDecl>
-
-    <Stmnt> ::= "null"
-    \alt "print" <Expr>
-    \alt <Ident> ":=" <Expr>
-    \alt "if" <Expr> "then" <ListStmnt> "else" <ListStmnt> "end"
-    \alt "while" <Expr> "do" <ListStmnt> "end"
-    \alt <Block>
-    \alt Ident "(" <ListExpr> ")"
-
-    <ListStmnt> ::= <Stmnt> ";" | <Stmnt> ";" <ListStmnt>
-
-    <Expr> ::= <Integer> | "true" | "false" | "(" <Expr> ")"
-    \alt <Ident> "(" <ListExpr> ")" | "neg" <Expr> | "not" <Expr>
-    \alt <Expr> "*" <Expr> | <Expr> "and" <Expr>
-    \alt <Expr> "+" <Expr> | <Expr> "or" <Expr>
-    \alt <Expr> "=" <Expr> | <Expr> "<" <Expr>
-
-    <ListExpr> ::= $\epsilon$ | <Expr> | <Expr> "," <ListExpr>
-
-    <TypeName> ::= "bool" | "int"
-\end{grammar}
-\section{LBNF Grammar}
-\begin{lstlisting}
-Prog.    Program ::= FuncDecl;
-FDecl.   FuncDecl ::= "function" Ident "(" [VarDecl] ")" 
-    "return" TypeName Block;
-PDecl.   ProcDecl ::= "procedure" Ident "(" [VarDecl] ")" Block;
-VDecl.   VarDecl  ::= Ident ":" TypeName; 
-separator VarDecl ";";
-
-Blck.    Block ::= "declare" [Decl] "begin" [Stmnt] "end";
-
-DFunc.   Decl ::= FuncDecl;
-DProc.   Decl ::= ProcDecl;
-DVar.    Decl ::= VarDecl;
-terminator Decl ";";
-
-SNull.   Stmnt ::= "null";
-SPrint.  Stmnt ::= "print" Expr;
-SAssign. Stmnt ::= Ident ":=" Expr;
-SIf.     Stmnt ::= "if" Expr "then" [Stmnt] "else" [Stmnt] "end";
-SWhile.  Stmnt ::= "while" Expr "do" [Stmnt] "end";
-SBlock.  Stmnt ::= Block;
-SCall.   Stmnt ::= Ident "(" [Expr] ")";
-terminator nonempty Stmnt ";";
-
-EInt.    Expr4 ::= Integer;
-ETrue.   Expr4 ::= "true";
-EFalse.  Expr4 ::= "false";
-
-ECall.   Expr3 ::= Ident "(" [Expr] ")";
-ENeg.    Expr3 ::= "neg" Expr4;
-ENot.    Expr3 ::= "not" Expr4;
-
-EMul.    Expr2 ::= Expr2 "*" Expr3;
-EAnd.    Expr2 ::= Expr2 "and" Expr3;
-
-EAdd.    Expr1 ::= Expr1 "+" Expr2;
-EOr.     Expr1 ::= Expr1 "or" Expr2;
-
-EEq.     Expr  ::= Expr "=" Expr1;
-ELT.     Expr  ::= Expr "<" Expr1;
-coercions Expr 4;
-separator Expr ",";
-
-TNBool.  TypeName ::= "bool";
-TNInt.   TypeName ::= "int";   
-\end{lstlisting}
-\section{AST}
+\subsection{AST}
 \begin{lstlisting}
 newtype Ident = Ident String
 data Program = Prog FuncDecl
@@ -134,8 +51,8 @@ data Expr
 data TypeName = TNBool | TNInt
 \end{lstlisting}
 
-\section{Type Rules}
-\subsection{Statements}
+\subsection{Type Rules}
+\subsubsection{Statements}
 \begin{figure}[H]
     \begin{prooftree}
         \LeftLabel{AdNullT}
@@ -145,7 +62,8 @@ data TypeName = TNBool | TNInt
     \caption{Type rule for null statement}
     \label{fig:adnullt}
 \end{figure}
-\subsection{Expressions}
+
+\subsubsection{Expressions}
 \begin{figure}[H]
     \begin{prooftree}
         \LeftLabel{AdTrueT}
@@ -154,4 +72,75 @@ data TypeName = TNBool | TNInt
     \end{prooftree}
     \caption{Type rule for true literal expression}
     \label{fig:adtruet}
+\end{figure}
+
+\section{Simply Typed Lambda Calculus}
+\subsection{AST}
+\begin{lstlisting}
+data Id = Id String
+
+data Literal 
+    = LitInt Int
+    | LitBool bool
+
+data Expr 
+    = Var Id
+    | Lit Literal
+    | App Expr Expr
+    | Lam Id Type Expr
+
+data Type
+    = TInt
+    | TBool
+    | TFun Type Type
+\end{lstlisting}
+
+\subsection{Type Rules}
+\begin{figure}[H]
+    \begin{prooftree}
+        \LeftLabel{STLCBoolean: }
+        \RightLabel{$[b \in \{true, false\}]$}
+        \AxiomC{}
+        \UnaryInfC{$\Gamma \vdash b : Bool$}
+    \end{prooftree}
+    \caption{Type rule for boolean literal}
+\end{figure}
+
+\begin{figure}[H]
+    \begin{prooftree}
+        \LeftLabel{STLCInteger: }
+        \RightLabel{$[n \in \mathbb{N}]$}
+        \AxiomC{}
+        \UnaryInfC{$\Gamma \vdash n : Integer$}
+    \end{prooftree}
+    \caption{Type rule for integer literal}
+\end{figure}
+
+\begin{figure}[H]
+    \begin{prooftree}
+        \LeftLabel{STLCVariable: }
+        \RightLabel{$[n : \tau \in \Gamma]$}
+        \AxiomC{}
+        \UnaryInfC{$\Gamma \vdash n : \tau$}
+    \end{prooftree}
+    \caption{Type rule for variable}
+\end{figure}
+
+\begin{figure}[H]
+    \begin{prooftree}
+        \LeftLabel{STLCLambda: }
+        \AxiomC{$\Gamma, x:\sigma \vdash e : \tau$}
+        \UnaryInfC{$\Gamma \vdash (\lambda x : \sigma\ .\ e) : (\sigma \rightarrow \tau)$}
+    \end{prooftree}
+    \caption{Type rule for lambda abstraction}
+\end{figure}
+
+\begin{figure}[H]
+    \begin{prooftree}
+        \LeftLabel{STLCApplication: }
+        \AxiomC{$\Gamma \vdash e_1 : \sigma \rightarrow \tau$}
+        \AxiomC{$\Gamma \vdash e_2 : \sigma$}
+        \BinaryInfC{$\Gamma \vdash e_1\ e_2 : \tau$}
+    \end{prooftree}
+    \caption{Type rule for function application}
 \end{figure}
