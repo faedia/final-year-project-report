@@ -1,0 +1,47 @@
+\section{Type Rules with Premises}
+The type rules we have discussed so far have been relatively uninteresting and extremely simply.
+While these sorts of type rules are simple they will be required in every language at some point.
+The simpleness of the type rules comes from the fact that none of them required any premises, this means that as long as the consequent is true then the evaluation of the type rule will succeed.
+The type rules we are going to discuss in this section will have premises of varying complexity, this will demonstrate what features are implemented in JET that allow the user to define type rules like these and how these type rules are then turned into code.
+
+\subsection{Simply Premise}
+The first type rule that we will look at is the rule STLCPred in \autoref{fig:stlcTyperules}.
+This is a rule for an expression in the Simply Typed Lambda Calculus that takes the predecessor of a number.
+Hence it is a rule that requires that the type of the expression it is acting on is also a number.
+Therefore, the premise for this rule is that the expression is of type $Int$ which means that $pred\ e$ is of type $Int$.
+A representation of this in JET is given in \autoref{lst:jetAdPredExpr}
+
+\begin{lstlisting}[caption = Type rule for pred expression involving one premise, label=lst:jetAdPredExpr]
+typerule TExprPred <- if {ctx} |- (Expr e) : TInt then 
+    (Expr Pred e) : TInt return {return ()};
+\end{lstlisting}
+
+As can now be seen the type rule takes the appearance of an if-then statement in traditional imperative languages.
+It can be thought of that the premise is a guard to the consequent, such that the consequent can only happen if we can prove the premise.
+The type premise takes a similar form as the consequent of the type rule, however, there is once difference.
+Just as a type rule may need to return some information about a change in the context, such as in the case of declarations, a type premise will need to be told what context we need to give to the type judgement such that we can prove it.
+Similarly to the consequent, we can also specify that the type of the premise must match some expected type.
+In this instance we are checking to make sure that the premise is of type integer such that we can say the consequent is of type integer.
+Another piece of syntax to note is we have also given a parameter to the constructor that we wish to pattern match in the consequent.
+This is so we can produce a valid constructor, but also so that we can perform premises on the paramters of the constructor, such as making sure that the expression for $pred$ is of type integer.
+
+\subsubsection{Check Function}
+When generating code for a check function involving a premise we want to make sure that we evaluate the premise before we return from the check function.
+We do this by making the premise a monadic statement that is executed before the return of the check function.
+Another reason why the premise is a monad is so that we can propagate the error back to the user in the event that the premise fails.
+This means that no other code is required when handling the error case of the premise due to Haskell's do notation.
+From these requirements we produce the code that can be seen in \autoref{lst:codeTExprPredCheck}.
+
+\begin{lstlisting}[caption = Code generated for checkExpr from TExprPred, label=lst:codeTExprPredCheck]
+checkExpr (Pred e) jetCheckType ctx = do
+    var1 <- checkExpr e TInt ctx
+    if jetCheckType == TInt then return () 
+    else fail (makeCheckError (Pred e) jetCheckType TInt)
+\end{lstlisting}
+
+One thing to note in the code that wasn't already stated is that we store the result of the successful return of the premise in a variable so that it can be used later if necessary.
+\todo{Rest of simply premise}
+
+\subsection{More Complicated Premises}
+\subsection{Side Conditions}
+\subsection{Limitations}

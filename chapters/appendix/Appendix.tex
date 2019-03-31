@@ -32,6 +32,7 @@ data Stmnt
     | SWhile Expr [Stmnt]
     | SBlock Block
     | SCall Ident [Expr]
+    | SReturn Expr
     deriving (Eq, Ord, Show, Read)
 
 data Expr
@@ -54,24 +55,47 @@ data TypeName = TNBool | TNInt
 \subsection{Type Rules}
 \subsubsection{Statements}
 \begin{figure}[H]
-    \begin{prooftree}
+    \begin{center}
         \LeftLabel{AdNullT}
         \AxiomC{}
         \UnaryInfC{$\Gamma \vdash \lfloor null \rfloor\ valid$}
-    \end{prooftree}
-    \caption{Type rule for null statement}
-    \label{fig:adnullt}
+        \DisplayProof{}
+        \label{fig:adnullt}
+        \ 
+        \LeftLabel{AdPrintT}
+        \AxiomC{$\Gamma \vdash e : \tau$}
+        \UnaryInfC{$\Gamma \vdash \lfloor print\ e\rfloor\ valid$}
+        \DisplayProof{}
+        \label{fig:adprintt}
+    \end{center}
+    \caption{Type rules for statements in the Ad language}
+    \label{fig:adStmnts}
 \end{figure}
 
 \subsubsection{Expressions}
 \begin{figure}[H]
-    \begin{prooftree}
+    \begin{center}
         \LeftLabel{AdTrueT}
         \AxiomC{}
-        \UnaryInfC{$\Gamma \vdash true : TBool$}
-    \end{prooftree}
-    \caption{Type rule for true literal expression}
-    \label{fig:adtruet}
+        \UnaryInfC{$\Gamma \vdash true : Bool$}
+        \DisplayProof{}
+        \label{fig:adtruet}
+        \ 
+        \LeftLabel{AdFalseT}
+        \AxiomC{}
+        \UnaryInfC{$\Gamma \vdash false : Bool$}
+        \DisplayProof{}
+        \label{fig:adfalset}
+
+        \ \\
+        \LeftLabel{AdInt}
+        \AxiomC{}
+        \UnaryInfC{$\Gamma \vdash n : Int$}
+        \DisplayProof{}
+        \label{fig:adintt}
+    \end{center}
+    \label{fig:adExprs}
+    \caption{Type rules for expressions in the Ad language}
 \end{figure}
 
 \section{Simply Typed Lambda Calculus}
@@ -96,51 +120,129 @@ data Type
 \end{lstlisting}
 
 \subsection{Type Rules}
-\begin{figure}[H]
-    \begin{prooftree}
-        \LeftLabel{STLCBoolean: }
+\begin{figure}[h]
+    \begin{center}
+        \LeftLabel{STLCBool: }
         \RightLabel{$[b \in \{true, false\}]$}
         \AxiomC{}
         \UnaryInfC{$\Gamma \vdash b : Bool$}
-    \end{prooftree}
-    \caption{Type rule for boolean literal}
-\end{figure}
-
-\begin{figure}[H]
-    \begin{prooftree}
-        \LeftLabel{STLCInteger: }
+        \DisplayProof{}
+        \ \\\ \\
+        \LeftLabel{STLCInt: }
         \RightLabel{$[n \in \mathbb{N}]$}
         \AxiomC{}
-        \UnaryInfC{$\Gamma \vdash n : Integer$}
-    \end{prooftree}
-    \caption{Type rule for integer literal}
-\end{figure}
-
-\begin{figure}[H]
-    \begin{prooftree}
-        \LeftLabel{STLCVariable: }
+        \UnaryInfC{$\Gamma \vdash n : Int$}
+        \DisplayProof{}
+        \ 
+        \LeftLabel{STLCVar: }
         \RightLabel{$[n : \tau \in \Gamma]$}
         \AxiomC{}
         \UnaryInfC{$\Gamma \vdash n : \tau$}
-    \end{prooftree}
-    \caption{Type rule for variable}
-\end{figure}
-
-\begin{figure}[H]
-    \begin{prooftree}
-        \LeftLabel{STLCLambda: }
+        \DisplayProof{}
+        \ \\\ \\
+        \LeftLabel{STLCLam: }
         \AxiomC{$\Gamma, x:\sigma \vdash e : \tau$}
         \UnaryInfC{$\Gamma \vdash (\lambda x : \sigma\ .\ e) : (\sigma \rightarrow \tau)$}
-    \end{prooftree}
-    \caption{Type rule for lambda abstraction}
-\end{figure}
+        \DisplayProof{}
 
-\begin{figure}[H]
-    \begin{prooftree}
-        \LeftLabel{STLCApplication: }
+        \ \\\ \\
+        \LeftLabel{STLCApp: }
         \AxiomC{$\Gamma \vdash e_1 : \sigma \rightarrow \tau$}
         \AxiomC{$\Gamma \vdash e_2 : \sigma$}
         \BinaryInfC{$\Gamma \vdash e_1\ e_2 : \tau$}
-    \end{prooftree}
-    \caption{Type rule for function application}
+        \DisplayProof{}
+
+        \ \\\ \\
+        \LeftLabel{STLCPred: }
+        \AxiomC{$\Gamma \vdash e : Int$}
+        \UnaryInfC{$\Gamma \vdash pred\ e : Int$}
+        \DisplayProof{}
+        \ 
+        \LeftLabel{STLCSucc: }
+        \AxiomC{$\Gamma \vdash e : Int$}
+        \UnaryInfC{$\Gamma \vdash succ\ e : Int$}
+        \DisplayProof{}
+
+        \ \\\ \\
+        \LeftLabel{STLCIszero: }
+        \AxiomC{$\Gamma \vdash e : Int$}
+        \UnaryInfC{$\Gamma \vdash iszero\ e : Bool$}
+        \DisplayProof{}
+        \ 
+        \LeftLabel{STLCFix: }
+        \AxiomC{$\Gamma \vdash e : \tau \rightarrow \tau$}
+        \UnaryInfC{$\Gamma \vdash fix\ e : \tau$}
+        \DisplayProof{}
+
+        \ \\\ \\
+        \LeftLabel{STLCIf: }
+        \AxiomC{$\Gamma \vdash e_1 : Bool$}
+        \AxiomC{$\Gamma \vdash e_2 : \tau$}
+        \AxiomC{$\Gamma \vdash e_3 : \tau$}
+        \TrinaryInfC{$\Gamma \vdash if\ e_1\ then\ e_2\ then\ e_2 : \tau$}
+        \DisplayProof{}
+    \end{center}
+    \label{fig:stlcTyperules}
+    \caption{Type rules for the simply typed lambda calculus}
 \end{figure}
+
+\subsection{JET Specification}
+\begin{lstlisting}
+{
+\{-# Language FlexibleContexts #-\}
+module TypeCheck where
+
+import Debug.Trace
+import JetContext
+import JetErrorM
+import Lang.Ast
+
+type Context = JetContextMap Id Type
+makeCheckError _ _ _ = "Type Error"
+makeInferError _ _ = "Type Error"
+}
+
+typerule TLitBool <- (Literal LitBool b) : TBool 
+    return {return ()};
+typerule TLitInt <- (Literal LitInt n) : TInt 
+    return {return ()};
+typerule TLitUnit <- (Literal LitUnit) : TUnit 
+    return {return ()};
+
+typerule TExprVar <- 
+    if {t <- lookupContext var ctx} then 
+    (Expr Var loc var) : t return {return ()};
+typerule TExprLit <- 
+    if {ctx} |- (Literal k) : t then 
+    (Expr Lit pos k) : t return {return ()} ;
+typerule TExprIf <- 
+    if {ctx} |- (Expr ep) : TBool, {ctx} |- (Expr et) : t, 
+        {ctx} |- (Expr ef) : t then 
+    (Expr If ep et ef) : t return {return ()};
+typerule TExprApp <- 
+    if {ctx} |- (Expr e1) : TFun t1 t2, 
+        {ctx} |- (Expr e2) : t1 then 
+    (Expr App e1 e2) : t2 return {return ()};
+typerule TExprLam <- 
+    if {=<< expandContext var t1 (newBlock ctx)} 
+        |- (Expr e) : t2 then 
+    (Expr Lam var t1 e) : TFun t1 t2 return {return ()};
+typerule TExprLet <- 
+    if {ctx} |- (Expr e1) : t1, 
+        {=<< expandContext var t1 (newBlock ctx)} 
+            |- (Expr e2) : t2 then 
+    (Expr Let var e1 e2) : t2 return {return ()};
+typerule TExprFix <- 
+    if {ctx} |- (Expr e) : TFun t1 t2, 
+        {if t1 == t2 then return () else fail "Type error"} then 
+    (Expr Fix e) : t1 return {return ()};
+typerule TExprPred <- 
+    if {ctx} |- (Expr e) : TInt then 
+    (Expr Pred e) : TInt return {return ()};
+typerule TExprSucc <- 
+    if {ctx} |- (Expr e) : TInt then 
+    (Expr ESucc e) : TInt return {return ()};
+typerule TExprIszero <- 
+    if {ctx} |- (Expr e) : TInt then 
+        (Expr Iszero e) : TBool return {return ()};
+\end{lstlisting}

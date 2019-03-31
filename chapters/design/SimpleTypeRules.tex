@@ -7,7 +7,7 @@ Therefore the only code we need to generate is whatever needs to be returned bac
 In this case we don't need to return anything, however there maybe cases in other languages where we would want to return the context back to the parent.
 
 An example of rule such as this written in JET can be seen in \autoref{lst:jetAdNullT}
-\begin{lstlisting}[caption = Jet type rule for null statement, label=lst:jetAdNullT]
+\begin{lstlisting}[caption = JET type rule for null statement, label=lst:jetAdNullT]
 typerule AdNullT <- (Stmnt SNull) return {return ()}
 \end{lstlisting}
 
@@ -34,3 +34,59 @@ However, there is one possible instance where having \texttt{ctx} be last argume
 
 \subsection{Literal Expression Type Rule}
 Both of our test languages have literal expressions.
+Literal expressions are similar to our null statements example, in that there is not much that they type checker algorithm has to do.
+This is because, similar to null statements, they have no premises, and do not affect the context in anyway.
+The only difference between literal expressions and null statements is that literal expressions have types associated with them where as statements do not.
+
+\begin{lstlisting}[caption = JET type rule for simple literal expressions, label=lst:jetAdLitExpr]
+typerule AdTrueT <- (Expr ETrue) : TNBool return {return ()};
+\end{lstlisting}
+
+As can be seen in \autoref{lst:jetAdLitExpr}, we have specified something that was not specified in \autoref{lst:jetAdNullT}.
+That is we have annotated the type rule with the type that is associated with the code we are checking.
+In the case of a boolean \texttt{true} it has a type of boolean, where as a number has a type of integer.
+
+Since this rule has a type associated, the code we must generate is now more complicated.
+For example, we did not have to check the type of the null statement because it did not have a type.
+We also did not have to generate a function to infer the type of the null statement because again, there is no type to infer.
+However, since literal expressions do have types, we do have to check the type and provide an infer function to get the type of a literal expression.
+
+\subsubsection{Check Function}
+The check function we generate, which can be seen in \autoref{lst:codeAdTrueTCheck}, should assert that the incoming type is, in this case, the \texttt{TNBool}, otherwise we should produce some form of error.
+Errors take the form of a monad, in particular they are of type \texttt{JetError}, this monad is given to the user in a haskell module JetErrorM when they generate their code.
+This allows us to propagate the error, along with the error message back out to the user without having to call the error function explicitly\todo{Cite Functional programming book}.
+To produce the error message the generated code will call \texttt{makeCheckError} with the data that caused the error.
+The user must then define the function \texttt{makeCheckError}, to keep things simple in the example cases \texttt{makeCheckError} is defined to return "Type Error".
+However the user could write any code they liked as long it returned a String.
+
+\begin{lstlisting}[caption = Code generated for checkExpr from AdTrueT, label=lst:codeAdTrueTCheck]
+checkExpr ETrue jetCheckType ctx = do
+    if jetCheckType == TNBool then return () 
+    else fail (makeCheckError ETrue jetCheckType TNBool)
+\end{lstlisting}
+
+In \autoref{lst:altCodeAdTrueTCheck} I have given another piece of code that I could have generated that would have done the same thing.
+It uses pattern matching on the input type as well as the expression, this means we do not require if expression within the function.
+However we still do need the more generic function in order for us to be able to correct fail and call the \texttt{makeCheckError} function.
+
+\begin{lstlisting}[caption = Alternate Code for checkExpr from AdTrueT, label=lst:altCodeAdTrueTCheck]
+checkExpr ETrue TNBool ctx = then return () 
+checkExpr ETrue jetCheckType ctx = 
+    fail (makeCheckError ETrue jetCheckType TNBool)
+\end{lstlisting}
+
+In hindesight, this is a better to structure the code.
+This is because under certain circumstances, such as the ones seen in \todo{autoref to premises}, it can reduce the amount of unnecessary evaluation that may be required due to generating the code with the if expression being the last monadic statement.
+
+\subsubsection{Infer function}
+
+Infer functions return the type given by the type rule where as check functions assert that the type we are expecting is the same as the one given by the type rule.
+From this, for example given in \autoref{lst:jetAdLitExpr}, we generate the code that can be seen in \autoref{lst:codeAdTrueTInfer}.
+The code generated is very similar to the code seen in \autoref{lst:codeAdNullT}.
+This is because there are no premises to check and we do not need to check the type specified by the type rule, we just need to return the type.
+Therefore, the only thing this function does is return the type associated with the literal value $true$.
+
+\begin{lstlisting}[caption = Code generated for inferExpr from AdTrueT, label=lst:codeAdTrueTInfer]
+inferExpr ETrue ctx = do
+    return TNBool
+\end{lstlisting}
