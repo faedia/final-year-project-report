@@ -9,9 +9,9 @@ The first type rule that we will look at is the rule STLCPred in \autoref{fig:st
 This is a rule for an expression in the Simply Typed Lambda Calculus that takes the predecessor of a number.
 Hence it is a rule that requires that the type of the expression it is acting on is also a number.
 Therefore, the premise for this rule is that the expression is of type $Int$ which means that $pred\ e$ is of type $Int$.
-A representation of this in JET is given in \autoref{lst:jetAdPredExpr}
+A representation of this in JET is given in \autoref{lst:jetSTLCPredExpr}
 
-\begin{lstlisting}[caption = Type rule for pred expression involving one premise, label=lst:jetAdPredExpr]
+\begin{lstlisting}[caption = Type rule for pred expression involving one premise, label=lst:jetSTLCPredExpr]
 typerule TExprPred <- if {ctx} |- (Expr e) : TInt then 
     (Expr Pred e) : TInt return {return ()};
 \end{lstlisting}
@@ -40,8 +40,105 @@ checkExpr (Pred e) jetCheckType ctx = do
 \end{lstlisting}
 
 One thing to note in the code that wasn't already stated is that we store the result of the successful return of the premise in a variable so that it can be used later if necessary.
-\todo{Rest of simply premise}
+We now also see the advantage that the style of code in \autoref{lst:altCodeAdTrueTCheck} would have provided.
+If had produced code like that then we would not have to unnecessarily evaluate \texttt{checkExpr e TInt ctx}.
+We would only want to evaluate that premise if the type to be checked was integer.
+If it was not of type integer then the evaluation of the premise was unnecessary because we could have already known that the type check was going to fail.
 
-\subsection{More Complicated Premises}
+\subsubsection{Infer Function}
+Similarly to the check function, when trying to infer the type we also want to run the premises and fail if the premises fail.
+Otherwise if we succeed when the premises fail then we have falsely provided a proof of the type.
+
+The code for the infer function, see in \autoref{lst:codeTExprPredInfer}, is very similar to what is seen in the code for the check function for the type rule.
+An infer function must perform the same premises as the check function.
+Where they differ is in what they return, a check function returns what ever changes it made to the context or anything else of the sort, where as infer function return the type that they have inferred from the given input and context.
+This function is so simple that there is not much that could be changed in the code it generates.
+It does what is required of it to perform the proof of the type and then return the type.
+There is no way to not perform the premises, unlike the optimisation of the check function, as the premise is what proves the type to return and are therefore required to be evaluated.
+
+\begin{lstlisting}[caption = Code generated for inferExpr from TExprPred, label=lst:codeTExprPredInfer]
+inferExpr (Pred e) ctx = do
+    var1 <- checkExpr e TInt ctx
+    return TInt
+\end{lstlisting}
+
+\subsection{Premises with Type Variables}
+There is more we can do with premises other than just assert, for example, something is of type integer or boolean.
+So far we have only covered type rules with specified typed.
+However, in natural deduction logic we can make statements about arbitrary types such as the if expression inference rule seen in \autoref{fig:ifExprRule}.
+Here we have the expression $e_1$ with the type $Bool$, where as $e_2$ and $e_3$ have arbitrary types $\tau$.
+Along with the whole expression having type $\tau$.
+In inference rules all occurrences of a variable have the same value, therefore, all $\tau$'s are the same.
+
+In Jet, similarly to natural deduction logic, we can not only specify types but also say that something is of an arbitrary type variable.
+How the distinction is handled is the same way Haskell handles the distinction between types and type variables, that is types start with an upper case letter and type variables start with a lower case letter.
+
+\begin{figure}[tbp]
+    \begin{prooftree}
+        \LeftLabel{IfExpr: }
+        \AxiomC{$\Gamma \vdash e_1 : Bool$}
+        \AxiomC{$\Gamma \vdash e_2 : \tau$}
+        \AxiomC{$\Gamma \vdash e_3 : \tau$}
+        \TrinaryInfC{$\Gamma \vdash if\ e_1\ then\ e_2\ else\ e_3 : \tau$}
+    \end{prooftree}
+    \label{fig:ifExprRule}
+    \caption{Example of If-Expression inference rule}
+\end{figure}
+
+From these constraints we can specify a type rule to type check and type infer the inference expression given in \autoref{fig:ifExprRule}.
+It is very similar to type rules that we have seen before, just instead of giving a type for $e_2$ and $e_3$ we will be giving them a type variable.
+We will also need three type premises, we can define any number of type premises, where the premises are comma separated.
+The last thing we need to do is to make sure the consequent is of the same type as $e_2$ and $e_3$, we do this by saying it is the same type variable as them.
+The whole type rule can be seen in \autoref{lst:jetSTLCIfExpr}
+
+\begin{lstlisting}[caption = Type rule for if expression expression involving type variables, label=lst:jetSTLCIfExpr]
+typerule TExprIf <- if 
+        {ctx} |- (Expr e1) : TBool, 
+        {ctx} |- (Expr e2) : t, 
+        {ctx} |- (Expr e3) : t then 
+    (Expr If e1 e2 e3) : t return {return ()};
+\end{lstlisting}
+
+Generating code for premises where we know the type of the premise is relatively simply.
+However, since we now have to deal with type variables, we need to figure out the type of the premises. 
+This is why we have been generating infer functions.
+Check functions check that the rule is the same as the incoming type.
+Whereas infer function return the type so that it can be used in other type rules.
+However if we have the same type rule in multiple premises then we do not want to figure out the same type twice for a number of reasons.
+The first reason is that there is no point to do so, we in already know the type, we only need to make sure that this premise is of the same type as the previous premise with that type variable.
+The other reason is the types for the same type variable could be different and we would not know, this means that the type checker could say that an input was type correct when in reality it should have been a type error.
+Therefore we need to keep track of what type variables we have seen when generating the code for the premises.
+
+We will not discuss the check function for this example because the code generated for the premises in both the check functions and infer functions will always be the same.
+
+\subsubsection{Infer function}
+The code we produce for the infer function can be see in \autoref{lst:codeTExprIfInfer}.
+The first premise is as we have seen previously, it is a know type so we are able to perform the check function on it.
+The next statement relates to the second premise in the type rule.
+This premise refers to a type variable that we currently know nothing about, therefore, the code we generate will want to be the infer function so that we can figure out the type that the type variable, t, represents.
+We always bind the result of the infer function to a variable of the same name as the type variable in the specification.
+Then we move onto the final premise, which also refers to the type variable.
+At this point we have already figured out the type that t represents.
+This is why instead of calling inferExpr again, we can now call checkExpr were the type to check for is now the variable t that was assigned in the previous premise.
+Finally, we then wish to return the type t rather than some known type.
+
+\begin{lstlisting}[caption = Code generated for inferExpr from TExprIf, label=lst:codeTExprIfInfer]
+inferExpr (If e1 e2 e3) ctx = do
+    var1 <- checkExpr e1 TBool ctx
+    t <- inferExpr e2 ctx
+    var2 <- checkExpr e3 t ctx
+    return t
+\end{lstlisting}
+
 \subsection{Side Conditions}
+There is another way to represent type premises, and that is through the use of side conditions.
+Side conditions are extra predicates along side normal premises that must also be true for the consequent to be true.
+A user may wish to represent these side conditions with in their JET specification.
+Currently, from all the features of JET that we have discusses, there is no way to easily evaluate arbitrary code such that it can match any possible arbitrary predicate that could appear in a type specification in natural deduction logic.
+This is why there is feature that allows the user to write any arbitrary Haskell code and it be evaluated as a premise.
+For example is a user want to have a language that allowed the assignment of arbitrary number of variables in a single statement i.e. \texttt{a, b, c, d := e$_1$, e$_2$, e$_3$, e$_4$}, where a is assigned to e$_1$ and b is assigned to e$_2$ etc.
+In a statement like this it would be reasonable to expect that the list of variables to assign to is the same as the list of expressions.
+We could use the side conditions, it would be written in place of a normal type premise and would instead be a piece of inline Haskell code, where inline Haskell code is surrounded by curly braces (\{\}).
+There fore this could be written as: \texttt{\{if length vars == length exprs then return () else fail "Type error"\}}
+
 \subsection{Limitations}

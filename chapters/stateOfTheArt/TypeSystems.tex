@@ -21,7 +21,7 @@ In the literature, the standard method we have of representing type systems and 
 
 Natural deduction rules have a form of: given some premises we conclude the consequent\cite{prawitz2006natural,ranta2012implementing}, for example in \autoref{fig:generalNatDectRule} the premises are denoted as $J_k$ and the consequent is denoted as $C$.
 
-\begin{figure}[htbp]
+\begin{figure}[tbp]
     \begin{prooftree}
         \LeftLabel{Rule Label:\quad}
         \RightLabel{$[Side\ Conditions]$}
@@ -41,7 +41,7 @@ Finally for the consequent $e_1 + e_2 : Int$ means that the piece of concrete sy
 The top half of the rule are the things that must hold for the bottom half to be valid.\
 So simply $e_1$ must be of type $Int$ given the context $\Gamma$, and the same is for the second premise\cite{cardelli1996type,ranta2012implementing}.
 
-\begin{figure}[htbp]
+\begin{figure}[tbp]
     \begin{prooftree}
         \LeftLabel{Add Expression:\quad}
         \AxiomC{$\Gamma \vdash e_1 : Int$}
