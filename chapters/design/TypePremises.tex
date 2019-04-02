@@ -16,7 +16,7 @@ typerule TExprPred <- if {ctx} |- (Expr e) : TInt then
     (Expr Pred e) : TInt return {return ()};
 \end{lstlisting}
 
-As can now be seen the type rule takes the appearance of an if-then statement in traditional imperative languages.
+As can now be seen, the type rule takes the appearance of an if-then statement in traditional imperative languages.
 It can be thought of that the premise is a guard to the consequent, such that the consequent can only happen if we can prove the premise.
 The type premise takes a similar form as the consequent of the type rule, however, there is once difference.
 Just as a type rule may need to return some information about a change in the context, such as in the case of declarations, a type premise will need to be told what context we need to give to the type judgement such that we can prove it.
@@ -25,7 +25,6 @@ In this instance we are checking to make sure that the premise is of type intege
 Another piece of syntax to note is we have also given a parameter to the constructor that we wish to pattern match in the consequent.
 This is so we can produce a valid constructor, but also so that we can perform premises on the paramters of the constructor, such as making sure that the expression for $pred$ is of type integer.
 
-\subsubsection{Check Function}
 When generating code for a check function involving a premise we want to make sure that we evaluate the premise before we return from the check function.
 We do this by making the premise a monadic statement that is executed before the return of the check function.
 Another reason why the premise is a monad is so that we can propagate the error back to the user in the event that the premise fails.
@@ -45,7 +44,6 @@ If had produced code like that then we would not have to unnecessarily evaluate 
 We would only want to evaluate that premise if the type to be checked was integer.
 If it was not of type integer then the evaluation of the premise was unnecessary because we could have already known that the type check was going to fail.
 
-\subsubsection{Infer Function}
 Similarly to the check function, when trying to infer the type we also want to run the premises and fail if the premises fail.
 Otherwise if we succeed when the premises fail then we have falsely provided a proof of the type.
 
@@ -57,7 +55,6 @@ It does what is required of it to perform the proof of the type and then return 
 There is no way to not perform the premises, unlike the optimisation of the check function, as the premise is what proves the type to return and are therefore required to be evaluated.
 
 \begin{lstlisting}[caption = Code generated for inferExpr from TExprPred, label=lst:codeTExprPredInfer]
-inferExpr (Pred e) ctx = do
     var1 <- checkExpr e TInt ctx
     return TInt
 \end{lstlisting}
@@ -71,7 +68,7 @@ Along with the whole expression having type $\tau$.
 In inference rules all occurrences of a variable have the same value, therefore, all $\tau$'s are the same.
 
 In Jet, similarly to natural deduction logic, we can not only specify types but also say that something is of an arbitrary type variable.
-How the distinction is handled is the same way Haskell handles the distinction between types and type variables, that is types start with an upper case letter and type variables start with a lower case letter.
+How the distinction is handled is the same way Haskell handles the distinction between types and type variables: types start with an upper case letter and type variables start with a lower case letter.
 
 \begin{figure}[tbp]
     \begin{prooftree}
@@ -111,7 +108,6 @@ Therefore we need to keep track of what type variables we have seen when generat
 
 We will not discuss the check function for this example because the code generated for the premises in both the check functions and infer functions will always be the same.
 
-\subsubsection{Infer function}
 The code we produce for the infer function can be see in \autoref{lst:codeTExprIfInfer}.
 The first premise is as we have seen previously, it is a know type so we are able to perform the check function on it.
 The next statement relates to the second premise in the type rule.
@@ -119,16 +115,48 @@ This premise refers to a type variable that we currently know nothing about, the
 We always bind the result of the infer function to a variable of the same name as the type variable in the specification.
 Then we move onto the final premise, which also refers to the type variable.
 At this point we have already figured out the type that t represents.
-This is why instead of calling inferExpr again, we can now call checkExpr were the type to check for is now the variable t that was assigned in the previous premise.
+This is why instead of calling inferExpr again, we can now call checkExpr where the type to check for is now the variable t that was assigned in the previous premise.
 Finally, we then wish to return the type t rather than some known type.
 
-\begin{lstlisting}[caption = Code generated for inferExpr from TExprIf, label=lst:codeTExprIfInfer]
-inferExpr (If e1 e2 e3) ctx = do
-    var1 <- checkExpr e1 TBool ctx
+\begin{lstlisting}[caption = Code generated for type variables in inferExpr from TExprIf, label=lst:codeTExprIfInfer]
     t <- inferExpr e2 ctx
     var2 <- checkExpr e3 t ctx
     return t
 \end{lstlisting}
+
+We can also type variables with the type constructors.
+This allows us to extract the parameters to some type constructor.
+For example, if there was an array access expression, we may want to know the type that the elements of the array hold.
+The natrual deduction rule for this kind of type rule can be seen in \autoref{fig:typeRuleArr} \todo{cite TAPL book where the example comes from}.
+In this example the definition of the array type in the AST would be \texttt{Type = TArr Type | ...}.
+As can be seen the array type takes in a type as a parameter which is the type of the elements of the array.
+Therefore, when type checking an array access, to retrieve the type of the element of the array you would want extract that parameter from the array.
+This can be achieved through the use of Haskell's pattern matching features.
+We want to generate some code of the form \texttt{TArr t <- inferExpr e ctx}, because this code asserts that the type returned from infer function must be an array type, we then get the parameter of the array type and store it in some variable t.
+The generator will also have to add the variable t to the list of known type variables so that if another premise required the use of this type variable then we can generate a check function instead of an infer function.
+We express this premise in the type rule in a very similar manner to what code is generated:
+\texttt{\{ctx\} |- (Expr e) : TArr t}.
+There is one issue with the code that we generate at the moment.
+If the return of the infer function does not match the pattern function then the type checker will error, but not with our defined error function since the error was an internal Haskell error.
+Instead the right hand side of the binding will want to call our error function in case of a bad patter match, from this criteria we produce the follow code: \texttt{case inferExpr e ctx of Succ jet0@(TArr t) -> Succ jet0; Succ t -> Fail (makeInferError t t); x -> x}.
+
+\begin{figure}[t]
+    \centering
+    \begin{prooftree}
+        \LeftLabel{ArrAccess: }
+        \AxiomC{$\Gamma \vdash e : TArr\ t$}
+        \AxiomC{$\Gamma \vdash i : TInt$}
+        \BinaryInfC{$\Gamma \vdash e[i] : t$}
+    \end{prooftree}
+    \caption{Example type rule for array access}
+    \label{fig:typeRuleArr}
+\end{figure}
+
+This kind of type rule is used in both witness languages.
+The Simply Typed Lambda Calculus required it so that lambda abstract and lambda application can be type checked.
+This feature is also required so that the fix point operator can be type checked.
+It is required in the Ad language so that array types and record types can be type checked correctly.
+
 
 \subsection{Side Conditions}
 There is another way to represent type premises, and that is through the use of side conditions.
@@ -142,3 +170,4 @@ We could use the side conditions, it would be written in place of a normal type 
 There fore this could be written as: \texttt{\{if length vars == length exprs then return () else fail "Type error"\}}
 
 \subsection{Limitations}
+\todo{discuss limitations on the use of type variables.}

@@ -51,7 +51,6 @@ For example, we did not have to check the type of the null statement because it 
 We also did not have to generate a function to infer the type of the null statement because again, there is no type to infer.
 However, since literal expressions do have types, we do have to check the type and provide an infer function to get the type of a literal expression.
 
-\subsubsection{Check Function}
 The check function we generate, which can be seen in \autoref{lst:codeAdTrueTCheck}, should assert that the incoming type is, in this case, the \texttt{TNBool}, otherwise we should produce some form of error.
 Errors take the form of a monad, in particular they are of type \texttt{JetError}, this monad is given to the user in a haskell module JetErrorM when they generate their code.
 This allows us to propagate the error, along with the error message back out to the user without having to call the error function explicitly\todo{Cite Functional programming book}.
@@ -77,8 +76,6 @@ checkExpr ETrue jetCheckType ctx =
 
 In hindsight, this is a better to structure the code.
 This is because under certain circumstances, such as the ones seen in\todo{autoref to premises}, it can reduce the amount of unnecessary evaluation that may be required due to generating the code with the if expression being the last monadic statement.
-
-\subsubsection{Infer function}
 
 Infer functions return the type given by the type rule where as check functions assert that the type we are expecting is the same as the one given by the type rule.
 From this, for example given in \autoref{lst:jetAdLitExpr}, we generate the code that can be seen in \autoref{lst:codeAdTrueTInfer}.
