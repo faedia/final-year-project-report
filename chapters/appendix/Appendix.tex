@@ -12,15 +12,13 @@ It is a simple imperative language.
 \subsection{AST}
 \begin{lstlisting}
 newtype Ident = Ident String
-data Program = Prog FuncDecl
+data Program = Prog ProcDecl
 
-data FuncDecl = FDecl Ident [VarDecl] TypeName Block
+data FuncDecl = FDecl Ident [VarDecl] TypeName [Decl] [Stmnt]
 
-data ProcDecl = PDecl Ident [VarDecl] Block
+data ProcDecl = PDecl Ident [VarDecl] [Decl] [Stmnt]
 
 data VarDecl = VDecl Ident TypeName
-
-data Block = Blck [Decl] [Stmnt]
 
 data Decl = DFunc FuncDecl | DProc ProcDecl | DVar VarDecl
 
@@ -30,15 +28,15 @@ data Stmnt
     | SAssign Ident Expr
     | SIf Expr [Stmnt] [Stmnt]
     | SWhile Expr [Stmnt]
-    | SBlock Block
+    | SBlock [Decl] [Stmnt]
     | SCall Ident [Expr]
     | SReturn Expr
-    deriving (Eq, Ord, Show, Read)
 
 data Expr
     = EInt Integer
     | ETrue
     | EFalse
+    | EVar Ident
     | ECall Ident [Expr]
     | ENeg Expr
     | ENot Expr
@@ -49,7 +47,7 @@ data Expr
     | EEq Expr Expr
     | ELT Expr Expr
 
-data TypeName = TNBool | TNInt
+data TypeName = TNBool | TNInt | TNNone
 \end{lstlisting}
 
 \subsection{Type Rules}
@@ -93,6 +91,57 @@ data TypeName = TNBool | TNInt
         \UnaryInfC{$\Gamma \vdash n : Int$}
         \DisplayProof{}
         \label{fig:adintt}
+        \ 
+        \LeftLabel{AdNot}
+        \AxiomC{$\Gamma \vdash e : Bool$}
+        \UnaryInfC{$\Gamma \vdash not\ e : Bool$}
+        \DisplayProof{}
+        \ 
+        \LeftLabel{AdNeg}
+        \AxiomC{$\Gamma \vdash e : Int$}
+        \UnaryInfC{$\Gamma \vdash neg\ e : Int$}
+        \DisplayProof{}
+
+        \ \\
+        \LeftLabel{AdAnd}
+        \AxiomC{$\Gamma \vdash e_1 : Bool$}
+        \AxiomC{$\Gamma \vdash e_2 : Bool$}
+        \BinaryInfC{$\Gamma \vdash e_1\ and\ e_2 : Bool$}
+        \DisplayProof{}
+
+        \ \\
+        \LeftLabel{AdMul}
+        \AxiomC{$\Gamma \vdash e_1 : Int$}
+        \AxiomC{$\Gamma \vdash e_2 : Int$}
+        \BinaryInfC{$\Gamma \vdash e_1 * e_2 : Int$}
+        \DisplayProof{}
+
+        \ \\
+        \LeftLabel{AdOr}
+        \AxiomC{$\Gamma \vdash e_1 : Bool$}
+        \AxiomC{$\Gamma \vdash e_2 : Bool$}
+        \BinaryInfC{$\Gamma \vdash e_1\ or\ e_2 : Bool$}
+        \DisplayProof{}
+
+        \ \\
+        \LeftLabel{AdAdd}
+        \AxiomC{$\Gamma \vdash e_1 : Int$}
+        \AxiomC{$\Gamma \vdash e_2 : Int$}
+        \BinaryInfC{$\Gamma \vdash e_1 + e_2 : Int$}
+        \DisplayProof{}
+
+        \ \\
+        \LeftLabel{AdEq}
+        \AxiomC{$\Gamma \vdash e_1 : \tau$}
+        \AxiomC{$\Gamma \vdash e_2 : \tau$}
+        \BinaryInfC{$\Gamma \vdash e_1 = e_2 : Bool$}
+        \DisplayProof{}
+        \ 
+        \LeftLabel{AdLT}
+        \AxiomC{$\Gamma \vdash e_1 : Int$}
+        \AxiomC{$\Gamma \vdash e_2 : Int$}
+        \BinaryInfC{$\Gamma \vdash e_1 < e_2 : Bool$}
+        \DisplayProof{}
     \end{center}
     \label{fig:adExprs}
     \caption{Type rules for expressions in the Ad language}
@@ -120,7 +169,7 @@ data Type
 \end{lstlisting}
 
 \subsection{Type Rules}
-\begin{figure}[h]
+\begin{figure}[H]
     \begin{center}
         \LeftLabel{STLCBool: }
         \RightLabel{$[b \in \{true, false\}]$}
