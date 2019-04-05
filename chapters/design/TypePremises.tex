@@ -31,7 +31,7 @@ Another reason why the premise is a monad is so that we can propagate the error 
 This means that no other code is required when handling the error case of the premise due to Haskell's do notation.
 From these requirements we produce the code that can be seen in \autoref{lst:codeTExprPredCheck}.
 
-\begin{lstlisting}[caption = Code generated for checkExpr from TExprPred, label=lst:codeTExprPredCheck]
+\begin{lstlisting}[caption = Code generated for checkExpr from TExprPred, label=lst:codeTExprPredCheck, language=Haskell]
 checkExpr (Pred e) jetCheckType ctx = do
     var1 <- checkExpr e TInt ctx
     if jetCheckType == TInt then return () 
@@ -54,7 +54,7 @@ This function is so simple that there is not much that could be changed in the c
 It does what is required of it to perform the proof of the type and then return the type.
 There is no way to not perform the premises, unlike the optimisation of the check function, as the premise is what proves the type to return and are therefore required to be evaluated.
 
-\begin{lstlisting}[caption = Code generated for inferExpr from TExprPred, label=lst:codeTExprPredInfer]
+\begin{lstlisting}[caption = Code generated for inferExpr from TExprPred, label=lst:codeTExprPredInfer, language=Haskell]
     var1 <- checkExpr e TInt ctx
     return TInt
 \end{lstlisting}
@@ -118,7 +118,7 @@ At this point we have already figured out the type that t represents.
 This is why instead of calling inferExpr again, we can now call checkExpr where the type to check for is now the variable t that was assigned in the previous premise.
 Finally, we then wish to return the type t rather than some known type.
 
-\begin{lstlisting}[caption = Code generated for type variables in inferExpr from TExprIf, label=lst:codeTExprIfInfer]
+\begin{lstlisting}[caption = Code generated for type variables in inferExpr from TExprIf, label=lst:codeTExprIfInfer, language=Haskell]
     t <- inferExpr e2 ctx
     var2 <- checkExpr e3 t ctx
     return t
@@ -144,8 +144,8 @@ Instead the right hand side of the binding will want to call our error function 
     \centering
     \begin{prooftree}
         \LeftLabel{ArrAccess: }
-        \AxiomC{$\Gamma \vdash e : TArr\ t$}
-        \AxiomC{$\Gamma \vdash i : TInt$}
+        \AxiomC{$\Gamma \vdash e : Arr\ t$}
+        \AxiomC{$\Gamma \vdash i : Int$}
         \BinaryInfC{$\Gamma \vdash e[i] : t$}
     \end{prooftree}
     \caption{Example type rule for array access}

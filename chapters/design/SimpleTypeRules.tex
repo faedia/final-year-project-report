@@ -23,7 +23,7 @@ Also notice that since the type rule contained no information about resulting ty
 This also means that there is no need to generate a function to infer the type given by this rule as there is no type associated with the rule, therefore, we do not generate the function to do such a type inference.
 Therefore, the only thing the code does is pattern match against the piece of specified syntax and return an empty tuple since Statement rules in the language do not affect the context in any way.
 
-\begin{lstlisting}[caption = Code generated from AdNullT, label=lst:codeAdNullT]
+\begin{lstlisting}[caption = Code generated from AdNullT, label=lst:codeAdNullT, language=Haskell]
 checkStmnt SNull ctx = do
     return ()
 \end{lstlisting}
@@ -68,7 +68,7 @@ In \autoref{lst:altCodeAdTrueTCheck} I have given another piece of code that I c
 It uses pattern matching on the input type as well as the expression, this means we do not require if expression within the function.
 However we still do need the more generic function in order for us to be able to correct fail and call the \texttt{makeCheckError} function.
 
-\begin{lstlisting}[caption = Alternate Code for checkExpr from AdTrueT, label=lst:altCodeAdTrueTCheck]
+\begin{lstlisting}[caption = Alternate Code for checkExpr from AdTrueT, label=lst:altCodeAdTrueTCheck, language=Haskell]
 checkExpr ETrue TNBool ctx = then return () 
 checkExpr ETrue jetCheckType ctx = 
     fail (makeCheckError ETrue jetCheckType TNBool)
@@ -83,7 +83,7 @@ The code generated is very similar to the code seen in \autoref{lst:codeAdNullT}
 This is because there are no premises to check and we do not need to check the type specified by the type rule, we just need to return the type.
 Therefore, the only thing this function does is return the type associated with the literal value $true$.
 
-\begin{lstlisting}[caption = Code generated for inferExpr from AdTrueT, label=lst:codeAdTrueTInfer]
+\begin{lstlisting}[caption = Code generated for inferExpr from AdTrueT, label=lst:codeAdTrueTInfer, language=Haskell]
 inferExpr ETrue ctx = do
     return TNBool
 \end{lstlisting}

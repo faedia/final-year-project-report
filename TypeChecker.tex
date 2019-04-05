@@ -19,17 +19,28 @@
 
 \acknowledgements{
   Something about stuff
-  }
+}
 
+\lstset{
+  aboveskip=0mm,
+  belowskip=0mm,
+  showstringspaces=true,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
   % More definitions & declarations in example.ldf
   \begin{document}
   \pagenumbering{roman}
   \maketitle
-  %\renewcommand*{\lstlistlistingname}{List of Listings}
-  %\lstlistoflistings
+  \renewcommand*{\lstlistlistingname}{List of Listings}
+  \lstlistoflistings
 
   \listoffigures
-  \lstlistoflistings
+  %\lstlistoflistings
 
   \begin{summary}
     Summary Talk

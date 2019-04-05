@@ -23,15 +23,13 @@ JetContextMap is a list of Maps, where each Map is a scope in the code.
 The instance of JetContext for JetContextMap is already defined for the user an example of how to define an instance of JetContext.
 The example does not include full definitions for the functions and type classes, full definitions for JetContext can be seen in \autoref{appendix:jetLanguage}
 
-\begin{lstlisting}[caption = Example of initial inline haskell code, label=lst:inlineHaskellCode]
+\begin{lstlisting}[caption = Example of initial inline haskell code, label=lst:inlineHaskellCode, language=Haskell]
 {
 module TypeAd where
 
 Import AbsAd
 newtype Context = Context (Type, 
-    JetContextMap (Ident, [Type]) Type, 
-    JetContextMap (Ident, [Type]) Type, 
-    JetContextMap Ident Type)
+    JetContextMap (Ident, [Type]) Type, ...
 instance JetContextBase Context where
     emptyContext = 
         Context (TNNone, emptyContext, ...)

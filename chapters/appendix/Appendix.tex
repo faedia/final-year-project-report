@@ -10,7 +10,7 @@
 The Ad language is a test case language to express the features that the tool can generate code for.
 It is a simple imperative language.
 \subsection{AST}
-\begin{lstlisting}
+\begin{lstlisting}[language=Haskell]
 newtype Ident = Ident String
 data Program = Prog ProcDecl
 
@@ -149,7 +149,7 @@ data TypeName = TNBool | TNInt | TNNone
 
 \section{Simply Typed Lambda Calculus}
 \subsection{AST}
-\begin{lstlisting}
+\begin{lstlisting}[language=Haskell]
 data Id = Id String
 
 data Literal 
@@ -236,9 +236,9 @@ data Type
 \end{figure}
 
 \subsection{JET Specification}
-\begin{lstlisting}
+\begin{lstlisting}[escapechar=\$, language=Haskell]
 {
-\{-# Language FlexibleContexts #-\}
+{-# Language FlexibleContexts #-}
 module TypeCheck where
 
 import Debug.Trace

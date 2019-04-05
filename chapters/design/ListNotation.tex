@@ -1,1 +1,27 @@
 \section{List Notation}
+Many languages, in their abstract syntax, have nodes that take a list of nodes to be one of their children, an example of this can be seen as a sequence of statements as part of the Ad language in \autoref{appendix:witnessLanguages}.
+It is currently possible to type check these sorts of type rules with the current set of features we have discussed, unfortunately, it requires the use of side conditions to define variables to allow us to define more conventional premises to do the rest of the type checking.
+However, since dealing with lists of statements, or expressions, etc. are very common then it is worthwhile to add a set of features to the language that allows the user to define the type rules for lists of nodes.
+The set of features should allow the user to create type rules handle that the different patterns of lists that the user may want to have type rules for: such as the empty list; singleton list and the cons of an item and the tail of a list.
+The most useful pattern is probably the cons of an item and the rest of the list, represented in Haskell as \texttt{(x:xs)}.
+This is because it allows the user to recursively type check an item and then the end of the list.
+The other two patterns are useful when defining the base case of the recursive type rule, such as if the list is empty or if the list is the singleton list.
+Being able to pattern match on a singleton list allows the user to assert within the type rule that the list cannot be empty.
+The list notation can be used to both just perform a check, but also is able to return a type or a list of types.
+Returning a list of types is useful when type checking a function or procedure call, as seen in the Ad language, to check that the types of expressions (given as an expression list) matches the expected types of the procedure or function.
+
+\subsection{List Notation in Type Premises}
+Using list notation in type premises is similar to how normal type premises are used.
+The one difference is instead of encasing the premise with parenthesis, we instead encase it within square brackets.
+This so that it matches how lists are defined in Haskell, therefore, the users should be familiar with square brackets being associated with lists.
+The example for the list of statements is given as \texttt{\{ctx\} |- [Stmnt stmnts] }.
+As can be seen it is exactly the same is a normal type premise, with only the type of brackets used being different so that both the user and the tool can tell the difference.
+The code that is produced from this type of premise is also very similar to the code produced from a normal premise: \texttt{var1 <- checkStmntList stmnts ctx}.
+How the parameters are passed, along with how the result of the premise is bound to a variable, is exactly the same.
+The only difference being is the function name has \texttt{List} as a suffix.
+If we did not have this suffix then we would call \texttt{checkStmnt} which would lead to a type error as \texttt{checkStmnt} has the type: \texttt{Stmnt -> Context -> JetError a}, whereas the function we are trying to call would have to have type: \texttt{[Stmnt] -> Context -> JetError a}.
+The difference being, one expects a statement, the other expects a list of statements.
+
+\subsection{List Notation Type Rules}
+We have discusses how list notation is used in premises, however, that is not useful unless code can be generated for type rules using list notation.
+Type rules for list notation bear a resemblance to normal type rules, however, they do vary in sum fundamental ways.
