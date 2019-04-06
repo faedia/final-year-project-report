@@ -156,6 +156,8 @@ This kind of type rule is used in both witness languages.
 The Simply Typed Lambda Calculus required it so that lambda abstract and lambda application can be type checked.
 This feature is also required so that the fix point operator can be type checked.
 It is required in the Ad language so that array types and record types can be type checked correctly.
+This is because the constructors for these types are much more complicated than literal types as they require parameters so that all of the information about the type can be known.
+For example, a function type needs to know the type of the domain of the function and the range of the function; and an array type needs to know what type the elements of the array should be.
 
 
 \subsection{Side Conditions}
@@ -168,6 +170,8 @@ For example is a user want to have a language that allowed the assignment of arb
 In a statement like this it would be reasonable to expect that the list of variables to assign to is the same as the list of expressions.
 We could use the side conditions, it would be written in place of a normal type premise and would instead be a piece of inline Haskell code, where inline Haskell code is surrounded by curly braces (\{\}).
 There fore this could be written as: \texttt{\{if length vars == length exprs then return () else fail "Type error"\}}
+
+Having this functionality allows the user to express nuances in type systems that otherwise using the notation would not be possible or would require a large amount of work to add enough features such that it would be possible to express those more complicated semantics.
 
 \subsection{Limitations}
 \todo{discuss limitations on the use of type variables.}

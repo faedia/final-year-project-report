@@ -12,7 +12,7 @@ Returning a list of types is useful when type checking a function or procedure c
 
 \subsection{List Notation in Type Premises}
 Using list notation in type premises is similar to how normal type premises are used.
-The one difference is instead of encasing the premise with parenthesis, we instead encase it within square brackets.
+The one difference is instead of encasing the premise with parentheses, we instead encase it within square brackets.
 This so that it matches how lists are defined in Haskell, therefore, the users should be familiar with square brackets being associated with lists.
 The example for the list of statements is given as \texttt{\{ctx\} |- [Stmnt stmnts] }.
 As can be seen it is exactly the same is a normal type premise, with only the type of brackets used being different so that both the user and the tool can tell the difference.
@@ -25,3 +25,39 @@ The difference being, one expects a statement, the other expects a list of state
 \subsection{List Notation Type Rules}
 We have discusses how list notation is used in premises, however, that is not useful unless code can be generated for type rules using list notation.
 Type rules for list notation bear a resemblance to normal type rules, however, they do vary in sum fundamental ways.
+They have the same style representing premises in an if-then block, however the consequent is expressed differently.
+Similarly to premises, instead of being encased in parentheses they are encased in square brackets.
+The major differences occur in the variables that are defined within the rule and what semantic meaning they have.
+The simplest form is to just define the Node type and nothing else, for example: \texttt{[Stmnt]}.
+This will pattern match on the empty list, in this case, when all statements have been successfully type checked.
+The next pattern has the Node type and a variable name, given as: \texttt{[Stmnt s]}.
+The pattern matched on the singleton list, where the element with in the list is given the variable name given in the type rule.
+The final pattern that exists is the list constructor pattern, this, similar the the last two,  is given as the Node type but now followed by two variable names.
+The first variable represents the head of the list to be type checked (the first item), the second variable represents the tail of the list to be type checked (The rest of the list after the head has been removed).
+The variables in these type rules can be used the in the premises the same as any other variables.
+
+\begin{figure}
+    \begin{prooftree}
+        \LeftLabel{StmntList: }
+        \AxiomC{$\Gamma \vdash \lfloor stmnt \rfloor\ valid $}
+        \AxiomC{$\Gamma \vdash \lfloor stmnts \rfloor \ valid$}
+        \BinaryInfC{$\Gamma \vdash \lfloor stmnt;\ stmnts \rfloor\ valid$}
+    \end{prooftree}
+    \caption{Type rule for a sequence of statements in the Ad language}
+    \label{fig:StmntListTypeRule}
+\end{figure}
+
+An example of how to define a type rule in list notation is when type checking a list of statements.
+The type rule in natural deduction logic can be seen in \autoref{fig:StmntListTypeRule}.
+As can be seen the premises in this type rule make a recursive type rule, and our the type rule in JET will have to reflect this meaning.
+In the scenario given, the list statements must non-empty, we can create type rules that assert that the non-empty property must hold.
+We therefore have the the type rule in JET that can be seen in \autoref{lst:jetStmntList}.
+
+\begin{lstlisting}[caption = Type rule in JET for a seqeunce of statements, label=lst:jetStmntList]
+typerule StmntListCons <- if {ctx} |- (Stmnt stmnt), 
+        {ctx} |- [Stmnt stmnts] then 
+    [Stmnt stmnt stmnts] return {Succ ()};
+typerule StmntListSngltn <- if {ctx} |- (Stmnt stmnt),
+    then [Stmnt stmnt] return {Succ ()};
+\end{lstlisting}
+
