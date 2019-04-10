@@ -14,7 +14,7 @@ Returning a list of types is useful when type checking a function or procedure c
 Using list notation in type premises is similar to how normal type premises are used.
 The one difference is instead of encasing the premise with parentheses, we instead encase it within square brackets.
 This so that it matches how lists are defined in Haskell, therefore, the users should be familiar with square brackets being associated with lists.
-The example for the list of statements is given as \texttt{\{ctx\} |- [Stmnt stmnts] }.
+The example for the list of statements is given as \texttt{\{ctx\} |- [Stmnt stmnts]}.
 As can be seen it is exactly the same is a normal type premise, with only the type of brackets used being different so that both the user and the tool can tell the difference.
 The code that is produced from this type of premise is also very similar to the code produced from a normal premise: \texttt{var1 <- checkStmntList stmnts ctx}.
 How the parameters are passed, along with how the result of the premise is bound to a variable, is exactly the same.
@@ -51,7 +51,6 @@ An example of how to define a type rule in list notation is when type checking a
 The type rule in natural deduction logic can be seen in \autoref{fig:StmntListTypeRule}.
 As can be seen the premises in this type rule make a recursive type rule, and our the type rule in JET will have to reflect this meaning.
 In the scenario given, the list statements must non-empty, we can create type rules that assert that the non-empty property must hold.
-We therefore have the the type rule in JET that can be seen in \autoref{lst:jetStmntList}.
 
 \begin{lstlisting}[caption = Type rule in JET for a seqeunce of statements, label=lst:jetStmntList]
 typerule StmntListCons <- if {ctx} |- (Stmnt stmnt), 
@@ -61,3 +60,11 @@ typerule StmntListSngltn <- if {ctx} |- (Stmnt stmnt),
     then [Stmnt stmnt] return {Succ ()};
 \end{lstlisting}
 
+We therefore have the the type rule in JET that can be seen in \autoref{lst:jetStmntList}.
+As can be seen to create the behavior we desire need two type rules, one for when we have a list arbitrary length, and another for when the list contains a single item.
+This structure forces the list to be nonempty and the type checker will error if the list happens to be empty.
+Another important aspect to note is that we can recursively call out same type rule in order to type check the while list.
+This can be seen in the list constructor type rule where we type check the current statement but then also go on to type check the rest of the list.
+These patterns should be able to handle any usual type rule that a user is going to write.
+However they do not cover every possible pattern that could occur as they do not replicate how Haskell does pattern matching on lists but instead uses a subset of the patterns that Haskell has available.
+It could be possible in future to expand these patterns so that they do match all of the patterns that Haskell can handle, however we did not require this feature to type check the witness languages given.

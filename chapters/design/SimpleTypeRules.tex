@@ -52,7 +52,7 @@ We also did not have to generate a function to infer the type of the null statem
 However, since literal expressions do have types, we do have to check the type and provide an infer function to get the type of a literal expression.
 
 The check function we generate, which can be seen in \autoref{lst:codeAdTrueTCheck}, should assert that the incoming type is, in this case, the \texttt{TNBool}, otherwise we should produce some form of error.
-Errors take the form of a monad, in particular they are of type \texttt{JetError}, this monad is given to the user in a haskell module JetErrorM when they generate their code.
+Errors take the form of a monad\cite{wadler1995monads}, in particular they are of type \texttt{JetError}, this monad is given to the user in a haskell module JetErrorM when they generate their code.
 This allows us to propagate the error, along with the error message back out to the user without having to call the error function explicitly\todo{Cite Functional programming book}.
 To produce the error message the generated code will call \texttt{makeCheckError} with the data that caused the error.
 The user must then define the function \texttt{makeCheckError}, to keep things simple in the example cases \texttt{makeCheckError} is defined to return "Type Error".

@@ -1,0 +1,109 @@
+\section{Utilising the Context}
+Handling the context in JET is done through Haskell side condition to call functions that will get data from or insert data to the context.
+As the user can write any code they want it may seem initiative as to what is the best way to interact with the context.
+This is why the tool will provide the modules that can be seen in\todo{autoref to haskell modules appendix}, which will allow the user to instantiate a small number of Haskell type classes\todo{cite type classes} that will give the user a common interface with their defined context.
+It is important to note that these modules do not define the context for the user, the user will have to define their own context type and instantiate the Haskell type classes for their own context type.
+There is an example provided to the user of how to do this used Haskell Data Maps\todo{cite data maps} so that the user is not on their own in this regard.
+\subsection{Empty Contexts and Blocks}
+The most basic things you can do with a context is create an empty context or add a new block.
+An empty context should do exactly what the name suggests, it should create a new context that has no items in it.
+Since the user implements all the functions they should ensure that their function meets these semantic requirements.
+We will assume that all languages will have a block structure, and if a language does not that this can be modelled by having a context which will only ever have one block.
+How the context represents blocks is up to the user, however in our witness languages a single block is a map and our context is made up of a list of blocks.
+So when we implement out new block function for our context we will prepend to the list a new empty map, this is to meet the requirement of the new block function that each new block should have no items in it.
+Adding a new block is fairly simple with in the type rule, within the context definition of a type premise within a type rule you call the new block function on the context that you wish to add a new block in, for example:\\\texttt{{(newBlock ctx)} |- ($TypePremise$)}
+this also produces very simply code where we would usually have the variable \texttt{ctx} we now have the code \texttt{(newBlock ctx)} giving us the whole type premise of\\\texttt{$variable$ <- $TypePremiseFunc$ $TypePremiseParams$ (newBlock ctx)}
+\subsection{Variables}
+The most common use of the context is when attempting to type check the use of variables within a program.
+We will want to do two main actions with variables, the first is to retrieve the type of a variable from the context, the second is to add a new variable with a given type to the context.
+Retrieving the type of a variable from the context is given by the natural deduction rule in \autoref{fig:varTypeRule}, as can be seen the only thing we need to do is to perform an existence check that the variable given is in the context, we also need to get the type of that variable from the context.
+There is no way to express this meaning using normal type premises, instead we will have to use a Haskell side condition (similar to the side condition seen in the natural deduction rule).
+However the consequent is very trivial and is the same as the ones we have seen for other expression which have arbitrary types associated with them, the consequent in \author{lst:jetSTLCIfExpr} is an example of the consequent required here.
+We still need to retrieve the arbitrary type $\tau$ from the context.
+We can use do this by using the function, given by the \texttt{JetContext} type class, \texttt{lookupContext}.
+This function, given some a parameter to identify the item in the context (such as the variable name), will return the type associated with the input, or will return some fail message within the \texttt{JetError} monad.
+When using this in a haskell side condition we will want to bind the resulting type from the context to the variable that we are going to use as the return type variable of the consequent.
+If we say that the return variable of the consequent is \texttt{t}, then we will want to write the side condition as \texttt{\{t <- lookupContext var ctx\}}, where \texttt{var} is the variable to lookup and \texttt{ctx} is the given context to perform the lookup in.
+We do not do anything special when generating the code from a Haskell side condition, we simply put it directly into the generated code in the position it occurs in the premise list (In this example it is the only premise so that does not matter just as long as it appears before the return monadic statement).
+
+\begin{figure}
+    \begin{prooftree}
+        \LeftLabel{VarT: }
+        \RightLabel{$[v : \tau \in \Gamma]$}
+        \AxiomC{}
+        \UnaryInfC{$\Gamma \vdash v : \tau$}
+    \end{prooftree}
+    \label{fig:varTypeRule}
+    \caption{Type rule for using a variable in the Simply Typed Lambda Calculus and Ad languages}
+\end{figure}
+
+We can now retrieve types of variables from the context, however, that is not useful unless we can add variables to the context.
+We will be using the example that can be seen in \autoref{fig:varDeclTypeRule} taken from the Ad language.
+In this case we don't have any side conditions or premises, we only have the consequent which has the context $\Gamma$ but also has the variable and type added to the context.
+We therefore need a way to represent this behavior in the return part of our type rule so that we can give this new context to the rest of the program that requires it.
+We do this by writing the required Haskell at the end of the type rule after the return keyword.
+The code written here is the code that will be return to the calling function so that it has all the required information from its child node, this is required when type checking a list of declarations.
+In order to add the variable to the context will want to use the function, given by the \texttt{JetContext} type class, \texttt{expandContext} which takes in something to identify the item (the variable), the type to be associated and the context to add the item to.
+This function may fail depending upon what the required semantics the user wants, for example a user may not want to be able to declare the same variable twice, and in other languages this may be allowed.
+The user is able to define this functionality when defining the instance of the type class.
+To use this function in the type rule we will want write something similar that was seen in the use of a variable but is slightly more complicated.
+We will want to write \texttt{\{expandContext var t ctx\}}, this will add (if it is possible) the variable \texttt{var} with type \texttt{t} to the context given by \texttt{ctx}.
+this gives us the whole type rule \texttt{(VarDecl var t) return \{expandContext var t ctx\}}.
+where the \texttt{expandContext} function call replaces the \texttt{()} that we have used previously.
+
+\begin{figure}
+    \begin{prooftree}
+        \LeftLabel{AdVarDecl: }
+        \AxiomC{}
+        \UnaryInfC{$\Gamma, v : \tau \vdash \lfloor v : \tau \rfloor\ valid$}
+    \end{prooftree}
+    \label{fig:varDeclTypeRule}
+    \caption{Type rule for variable declaration in the Ad language}
+\end{figure}
+
+\subsection{Procedures and Functions}
+Type checking functions in the Simply Typed Lambda Calculus is exactly the same as type checking variables as functions are first class citizens in the Simply Typed Lambda Calculus.
+However, this is not the same in the Ad language (or in many other similar imperative languages such as C or Ada).
+
+In order to type check procedures and functions we will want to discuss the notion of namespaces within JET.
+Namespaces is a way that we can write our context in such a way that we can type check functions procedures and variables and be able to tell the difference between them based upon how they are used.
+For example, in our Ad language we have to ways to call a subprogram (function or procedure), one is an expression therefore it requires a return type, the other is a statement and therefore requires not to have a return type.
+From this we can identify in the expression call we need to check for a function, and in our statement call we need to check for a procedure.
+We can also check for the difference between a function call and the use of a variable.
+These will therefore all come under different "contexts" within our actual context, we will refer to these as namespaces to avoid the use of conflicting names.
+We can interact with different namespaces by defined our new type, which will be our context identifier type.
+In this type we will have multiple constructors, one for variables, one for function, and one for procedures, this allows us to tell the difference between the variables procedures and function within our JetContext instance and perform different actions accordingly.
+
+Now we can discus how to type check functions and procedures.
+They are very similar in structure and semantics, they both have a list of variable declaration to type check, they also both have a block structure as their body.
+These consist of the premises.
+We then want to add the whole subprogram declaration to the outer scope that it is contained in so that we can be used in the block it is declared in.
+We will also want to add the subprogram declaration to the inner scope so that we can use the subprogram recursively.
+So if we have a consequent \texttt{(ProcDecl PDecl ident vdecls decls stmnts)}, where ident is the name of the procedure, vdecls are the variable declaration for the parameters of the procedure, decls is the initial declaration block of the procedure, and stmnts is the statement block of the procedure.
+We will want the type rule given in \autoref{lst:jetProcPremises}.
+
+\begin{lstlisting}[caption = Jet premise list for procedures., label=lst:jetProcPremises]
+If {let ts = map (\(VDecl _ t) -> t) vdecls},
+    {ctx' <- expandContext (Proc ident ts) TNNone (updateRetType ctx TNNone)}
+    {(newBlock ctx')} |- [VarDecl vdecls], 
+    {var1} |- [Decl decls], 
+    {var2} |- [Stmnt stmnts]
+then (ProcDecl PDecl ident vdecls decls stmnt) return {return ctx'}
+\end{lstlisting}
+
+The first 2 premises are side conditions to define variables that can be used later on in the premise list or in the consequent.
+The first simply gets the list of types from the list of variable declarations.
+Next we add the procedure to the given context as this will be required in another type premise and in the consequent.
+We then are able to type check the rest of the procedure declaration, the first thing we should do is type check the variable declaration to make sure that they are well formed before we can type check anything else, it is worth to note that here we add a new block to the context so as the parameters should belong to a new block.
+We can then type check the list of normal declarations, with the new context returned by the variable declarations (this makes sure that we do not redeclare a parameter in the declaration list).
+Finally we can check the body of the function, we give this the context given by the previous type premise, this is so it has visibility of all of the declarations and the parameters.
+It will also have the procedure in the context so that we can recursively call the procedure.
+We have already covered the consequent, the next thing to cover then is the return statement.
+This is simply just to return the context that has the procedure declaration added to it.
+We should not need to cover the generated code for this as we have discussed all the features that we have used to write this type rule previously, we are simply demonstrating how you would use those features to type check a procedure.]
+
+Functions are more or less identical expect we have the return type of the function that goes in place of the \texttt{TNNone} placeholder.
+We will also want to set the current return type so that we are type checking a return statement we can successfully check the type of the expression to return and the expected return type.
+
+\subsection{Record Types and Type Synonyms}
+\todo{I might just say that this is possible to do, but that the notation is not nice (Might therefore be better to go in evaluation.)}
