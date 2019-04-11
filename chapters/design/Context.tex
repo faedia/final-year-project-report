@@ -103,7 +103,7 @@ This is simply just to return the context that has the procedure declaration add
 We should not need to cover the generated code for this as we have discussed all the features that we have used to write this type rule previously, we are simply demonstrating how you would use those features to type check a procedure.]
 
 Functions are more or less identical expect we have the return type of the function that goes in place of the \texttt{TNNone} placeholder.
-We will also want to set the current return type so that we are type checking a return statement we can successfully check the type of the expression to return and the expected return type.
+We will also want to set the current return type so that when we are type checking a return statement we can successfully check the type of the expression to return and the expected return type.
 
 \subsection{Record Types and Type Synonyms}
 \todo{I might just say that this is possible to do, but that the notation is not nice (Might therefore be better to go in evaluation.)}

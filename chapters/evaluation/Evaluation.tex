@@ -1,4 +1,38 @@
 \chapter{Evaluation}
-\section{Language Structure and Extentions}
+
+While we were discussing the features in JET that allow for the representation of type systems we were using two witness languages that can be seen in \autoref{appendix:witnessLanguages}.
+The first of these languages is a language we have called Ad.
+Ad is a small imperative language.
+Ad has the use of variables, functions, and procedures.
+Along with a number built in statements and declarations and expressions.
+Ad also has two simple primitive types (integer and boolean).
+We also have the ability to use more complicated types such as array types and record types.
+There is also the option to define type synonyms that give a name to a more complex type.
+The second language is an implementation of the Simply Typed Lambda Calculus.
+This is a slightly smaller language than Ad, but has different language features.
+The Simply Typed Lambda Calculus is a small functional programming language that allows the use of lambda abstraction and application, along with the use of higher order functions.
+We designed these two languages in order to test the limits of what JET can specify and also to show that JET can specify languages with widely different programming paradigms and language features.
+They also match the aims of what language features the tool should be able to type check successfully given in \todo{autoref to aims}.
+
+Given all of the features and type rule patterns we have discussed in \autoref{chap:Method} we can successfully type check both of our witness languages.
+As per the aims given in \todo{autoref to aims}, we have discussed how to type check all but user defined types.
+The full type specification in JET along with the natural deduction rules that we are implementing in our JET specification can also be seen in \autoref{appendix:witnessLanguages}.
+While we have not discussed how to type check user defined types and record types, the JET specification for the Ad language does support these language features and does successfully type check them.
+We did not discuss these type rules because there are no other features in the language that allow for a better representation of user defined types and record types than the representation that can be seen in the JET specification of the Ad language.
+
+\section{Language Structure and Extensions}
+Support for context function directly in the grammar i.e x in y : t should generate t <- lookupContext x y
+
+Language support for user defined types for user defined types.
+
+Unify algorithm support and notation on how to specify how to unify types, will need to cite hindly milner type inference.
+
 \section{Generated Code Structure}
+Inefficient code generated in terms of monad statement order.
+
+Inefficient ctx parameter position.
+
+Generate quick check code for type classes to make sure they are implementing the semantics correct.
+
 \section{Operational Semantics and Big Step Notation}
+Long term extensions are to add ability to specify operation semantics.
