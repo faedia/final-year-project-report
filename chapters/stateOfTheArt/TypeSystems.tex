@@ -1,21 +1,23 @@
 \section{Type Systems}
-Before we can start discussing type checkers, we need to discuss the type systems which the checkers implement.
-
 The concept and implementation of type systems has existed for almost as long as the concept of higher level language to perform computation\cite{Backus:1978:HFI:960118.808380}.
 Many languages have a type system in one form or another with varying degrees of complexity,
-ranging from relatively simple type systems in languages such as C to fairly complex and expressive type systems such as those in Haskell and Agda.
+ranging from languages with no type system, such as Scheme or JavaScript, to relatively simple type systems in languages such as C, and finally fairly complex and expressive type systems such as those in Haskell and Agda.
 
-A type systems is a specification of a given programming language's type rules\cite{cardelli1996type}.
-So from this we know that a type system is a specification and we can say that a type checker is an implementation of the specification.
-Cardelli goes on to say that, we should separate the two, and that a type system is part of the language specification and the type checker is part of the compiler's implementation of the language\cite{cardelli1996type}.
-This is similar to the how we view the formal grammar is defined by the language, and the parser is how the compiler implements that formal grammar\cite{cardelli1996type}.
+"A type system specifies the type rules of a programming language independently of particular type checking algorithms"\cite{cardelli1996type}, where type rules define under what circumstances a code fragment can be considered type correct.
+This is an important distinction as it states that a type system is not how to type check the language, but instead states that the type checker should confirm to the type rules specified by the type system.
+Therefore it is the type system that defines the behaviour of the type checker.  
 
 \subsection{Usefulness of Type Systems}
-\todo{Need to research}
-
+There are many arguments as to the usefulness of type systems and whether or not languages should have static type systems.
+Cardelli makes a number of as to whether languages should be typed from an engineering point of view\cite{cardelli1996type}.
+However, an argument can be made that software could be made safer with the user of type systems.
+One of the most famous software bugs in history is that of the Ariane 5 resulting in the loss of the spacecraft after 39 seconds of flight.
+The bug that caused the loss of the Ariane 5 was in a function that converted a 64-bit floating point number to a 16-bit integer number.
+The bug was created when the function tried to convert the floating point number into a value that was larger than could be represented by a 16-bit integer\cite{lions1996ariane}.
+A more sophisticated type system could have possibly identified the differences in what the two data types could represent and reported an error to the developers during compilation to tell them about the possibility of an unsafe conversion.
+In this situation the bug could have been identified and fixed before the launch of the spacecraft.
 
 \subsection{Type Rules}
-
 Much like how we have a formal representation for context free grammars as Backus-Naur form\cite{Backus1960,aho2003compilers,ranta2012implementing}, we also have a formal way of representing type systems and type rules.
 In the literature, the standard method we have of representing type systems and type rules is through the use of natural deduction rules\cite{cardelli1996type,ranta2012implementing}.
 

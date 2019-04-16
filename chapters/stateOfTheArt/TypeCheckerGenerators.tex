@@ -1,9 +1,39 @@
 \section{Type Checker Generators}
 There have been multiple attempts to make the writing of type checkers easier on the compiler writers by creating new tools or notations.
+They can vary widely in how the express type systems and what notations they use.
+Some use the notation of attribute grammars to represent type systems, along with the rest of the compiler, where as other use more specialised Domain Specific Languages to represent their type rules and type checkers.
 
 \subsection{Attribute Grammars}
+Attribute Grammars are a way of specifying the semantics of grammar rules for a Context Free Grammar.
+This makes them seem a likely candidate to look at when attempting to generate type checking code since type checking is a form of semantic analysis on some input code.
+In Knuth's paper\cite{Knuth1968}, he gives an example of the attributes required to evaluate a simple language to emulate a Turing Machine.
+Even though he discusses the evaluation of a turing machine it is plain to see that on each node of the tree an attribute could be given to it that defines the type of the node.
+However we have already discussed a notation that represents this, namely the natural deduction logic to define inference rules, and that notation is widely used in the rest of the literature to formally specify type systems.
+While Attribute Grammars can represent the type system of a language, the notations for attribute grammars can vary widely where as the notation of natural deduction logic is fairly standard throughout the literature and widely accepted when formally defining type systems. 
+
 \subsubsection{Eli}
+Eli is a tool which, given a set of specifications, will generate code for a whole compiler based upon those specifications\cite{Gray:1992:ECF:129630.129637}.
+The way Eli generates all the code is by the use of an attribute grammar system and numerous internal tools that generate code for each different part of the compiler pipeline.
+
+Can generate a whole compiler.
+
+Fully formed tool.
+
+We do not need to generate a whole compiler just the type checker so should be able to focus a bit more.
+
+Syntax required a lot of auxiliary code.
+
+Can be hard to read and understand.
+
+Does not match inference rules.
+
+Limitations on the languages has to be parsed.
+
+We care more about the AST
 
 \subsection{Domain Specific Languages}
 \subsubsection{Ruler}
 \subsubsection{Typical}
+Is effectively a specialised functional programming language
+
+Representation of scopes and namespaces is very nice

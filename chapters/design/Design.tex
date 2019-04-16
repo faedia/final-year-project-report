@@ -1,29 +1,51 @@
-\chapter{Method}
+\chapter{Design of Notation}
 \label{chap:Method}
-Before we can generate type checking code we need to have a way of specifying the type system in such that a program can read the given specification and generate the required code.
-The way we will be specifying the the type system is through a domain specified language I have designed called JET Expresses Types (JET).
+Before we can generate type checking code we need to have a way of specifying the type system such that a program can read the given specification and generate the required code.
+The way we will be specifying the the type system is through a domain specified language I have designed called \textit{JET Expresses Types} (JET).
 The way type rules are written in JET are analogous to the natural deduction rules to define the type system.
-This appeared to make the most sense as other parts of the compiler pipeline already have domain specific languages that are used to generate code.
+This made the most sense as other parts of the compiler pipeline already have domain specific languages that are used to generate code.
 
-In JET, rather than using the concrete syntax that is used in in the natural deduction rules, uses the abstract syntax provided by the user, to define the type rules.
-Type rules in JET have a have a similar form to the natural deduction rules, such that there is a rule name followed by some judgments and then the consequent.
-This provides a common way of representing type rules even if the way of writing the rules in JET use an ascii representation of the natural deduction logic.
+In JET, rather than using the concrete syntax that is used in the natural deduction rules, we use the abstract syntax provided by the user to define the type rules.
+We are using the abstract syntax for a number of reasons; the first reason is that we are going to be type checking input that has already been parsed therefore we are going to be type checking the abstract syntax tree and not the input of the concrete syntax.
+The second reason, it is possible to type check an intermediate representation of a language, intermediate representations may only be represented through abstract syntax and have no concrete syntax, for example Haskell's intermediate representation (known as core) is type checked during Haskell's compilation process\cite{marlow2004glasgow}.
+Type rules in JET have a have a similar form to the natural deduction rules, such that there is a rule name followed by some judgements and then the consequent.
+This provides a common way of representing type rules even if the way of writing the rules in JET uses an ASCII representation of the natural deduction rules.
 
 The code we are generating is based off of the type checking and type inference algorithm described in Implementing Programming Languages\cite{ranta2012implementing}.
 This is because the the algorithms described are simple yet powerful enough to express common type rules, such as arithmetic expressions and also allow for the use of functions and variables.
 It also makes the code generation quite simple as there is a, more or less, direct translation of type rules to a function in the algorithm.
+We will be generating Haskell code, since we can use the features in the Haskell language such as pattern matching and the use of monads to help produce relatively simple code from a given type specification.
 
-The code we will be generating will be Haskell code, since we can use the features in the Haskell language such as pattern matching and the use of monads to help produce relatively simple code from a given type specification.
+\subsection{Example Languages}
+When discussing the features in JET, we will be discussing them in relation to two example languages.
+These languages fulfil our aims for what language features we want JET to be able to type check given in ??\todo{ref aims}.
+They also exhibit wildly different language features and paradigms so that we can demonstrate the diversity of languages that JET can type check.
 
-Below is explained how the language is used, why certain design decisions were made and what code is generated from the input source. 
-This will be demonstrated using a small number of  witness languages defined in \autoref{appendix:witnessLanguages}.
-The first language is a simple imperative language. 
-The language consists of single procedure in which you can define more procedures and subprograms along with define variables. In the body of the procedure is a series of statements such as a block statement, if-else statement, and for subprograms a return statement. The language is similar to Ada but much simpler.
-The next language is the simply typed lambda calculus, this will allow the demonstration of type checking higher order functions; lambda abstraction; and let expressions.
-The lambda calculus is based off of the definition that can be found in Pierce's book, Types and Programming Languages\cite{pierce2002types}.
+The first of these languages is a language I have called Ad.
+The language is a small imperative block structured language similar to Ada.
+An Ad program is a series of type definitions followed by a procedure.
+Procedures have a list of variable declarations as parameters.
+Procedures consist of a list of declarations followed by a list of statements.
+Declarations can introduce new variables or subprograms (collective term for a function or procedure).
+A variable declaration consists of an identifier annotated with the type of the new variable, i.e. \texttt{x : Int}.
+A function differs from a procedure in one way, a function returns a value whereas a procedure does not.
+There are a number of built-in statements in the language, consisting of control flow statements; a statement to introduce a new block; an assignment statement; a procedure call statement and a print statement. 
+The language also has a small number of built-in expressions: literal, arithmetic, Boolean, variable, and function call expressions.
+Ad has two primitive types: integer and Boolean.
+We are also able to express more complex types such as record and array types.
+We can define type synonyms in Ad, type synonyms are similar to typedef's in C such that we can give a more complex type a name to reduce repeated type definitions in variable declarations.
 
-\input{chapters/design/Language.tex}
-\input{chapters/design/SimpleTypeRules.tex}
-\input{chapters/design/TypePremises.tex}
-\input{chapters/design/ListNotation.tex}
-\input{chapters/design/Context.tex}
+Our second language is an implementation of the \textit{Simply Typed Lambda Calculus} (STLC).
+STLC is a simple functional programming language.
+A program in STLC consists of a single expression.
+In the language we have access to simple arithmetic expressions; we then have more complicated expressions such as an if-expression and fix-expressions (this allows for recursive functions), we also have lambda abstraction (this creates an anonymous function that takes an expression as a parameter and has a single expression as a body), and function application that applies a given function with a given parameter.
+The type system, while having the same primitive types as Ad, is quite different to the type system in Ad.
+The major difference is that we have a function type which is a type that takes an input to an output, often represented as $\tau \rightarrow \sigma$ where $\tau$ is the type of the parameter and $\sigma$ is the type returned by the function.
+This also means that the type system in STLC treats functions as "first-class citizens" as we can give functions as parameters to other functions and return new functions from a given function.
+STLC is based off of the lambda calculus that is given in \textcite{pierce2002types}, they go into much more detail and have more extensions to STLC than we are going to consider here.
+
+%\input{chapters/design/Language.tex}
+%\input{chapters/design/SimpleTypeRules.tex}
+%\input{chapters/design/TypePremises.tex}
+%\input{chapters/design/ListNotation.tex}
+%\input{chapters/design/Context.tex}
