@@ -12,12 +12,13 @@ Intermediate representations may only be represented through abstract syntax and
 Type rules in JET have a similar form to the natural deduction rules, such that there is a rule name followed by some judgments and then the consequent.
 This provides a common way of representing type rules even if the way of writing the rules in JET uses an ASCII representation of the natural deduction rules.
 
-The code we are generating is based off of the type checking and type inference algorithm described in Implementing Programming Languages\cite{ranta2012implementing}.
+The code we are generating is based off of the type checking and type inference algorithm described in \textcite{ranta2012implementing}.
 This is because the algorithms described are simple, yet powerful enough to express common type rules, such as arithmetic expressions and also allow for the use of functions and variables.
 It also makes the code generation quite simple as there is a direct translation of type rules to a function in the algorithm.
 We will be generating Haskell code, since we can use the features in the Haskell language such as pattern matching and the use of monads to help produce relatively simple code from a given type specification.
 
 \subsection{Example Languages}
+\label{sec:exampleLanguages}
 When discussing the features in JET, we will be discussing them in relation to two example languages.
 These languages fulfil our aims for what language features we want JET to be able to type check given in ??\todo{ref aims}.
 They also exhibit wildly different language features and paradigms so that we can demonstrate the diversity of languages that JET can type check.
@@ -49,7 +50,7 @@ Full definitions of the abstract syntax and formal type systems for both of our 
 JET specifications for both of these languages are also provided.
 
 \section{Overview of the JET Language}
-The JET language has two main structural components: some Haskell code in an initial section\footnote{This is similar flex and bison's C code blocks to provide data structures and functions for the scanner and parser}, followed by a list of type rules.
+The JET language has two main structural components: some Haskell code in an initial section\footnote{This is similar Flex and Bison's C code blocks to provide data structures and functions for the scanner and parser}, followed by a list of type rules.
 The initial Haskell block is to allow the user to define functions and types that are to be used in the following type rules.
 
 In order to write a type system in JET, the user will also have to provide a type which is an instance of a Haskell type class that defines a number of functions that will be useful when interacting with the context, such as looking up a variable in the context and adding an item to the context.
@@ -118,7 +119,7 @@ We will delve into more detail about the format of the type rules, but the basic
         <Rule> ::= `typerule' <Identifier> `<-' [ `if' <TypePremiseList> `then' ] <TypeConsequent> `return' <InlineHaskell>
     \end{grammar}
     \caption{BNF Grammar rule for defining a JET type rule}
-    \label{}
+    \label{fig:bnfTypeRuleBasic}
 \end{figure}
 
 
@@ -135,14 +136,13 @@ The formal grammar can be seen in its entirety in \autoref{appendix:jetLanguage}
 
 \section{Type Rules}
 Type rules are how we express the type system for which we wish to generate the type checking code for.
-Therefore, the structure and semantics of type rules will determine what language features JET can express and successfully generate correct code for the type checker.
+Therefore, the structure and semantics of type rules will determine what language features JET can express and successfully generate valid code for the type checker.
+We are going to be using the example languages seen in \autoref{sec:exampleLanguages} as motivation for the existence of features and their use.
 
-\subsection{Format of a Type Rule}
 \begin{figure}[]
     \begin{grammar}
         <TypeConsequent> ::=  <TypeJudgement>
         
-        <Type> ::= `:' <Identifier> <IdentifierList>
     
         <IdentifierList> ::= $\epsilon$ | <Identifier> <IdentifierList>
     
@@ -152,13 +152,62 @@ Therefore, the structure and semantics of type rules will determine what languag
         <TypePremise> ::= <InlineHaskell>
             \alt <InlineHaskell> `|-'  <TypeJudgement>
     
-        <TypeJudgement> ::= `(' <Identifier> <Identifier> <IdentifierList> `)' [<Type>]
+        <TypeJudgement> ::= `(' <Identifier> <Identifier> <IdentifierList> `)' <Type>
+        
+        <Type> ::= $\epsilon$ | `:' <Identifier> <IdentifierList>
     \end{grammar}
     \caption{BNF Grammar rule for constituent parts of a JET type rule}
-    \label{}
+    \label{fig:bnfTypeRuleComp}
 \end{figure}
 
+We have already seen a brief overview of the structure of type rules; now we will go into more detail about the structure and what sematic meaning different syntactic parts of the type rule have.
+The grammar rule seen in \autoref{fig:bnfTypeRuleComp}, along with the one in \autoref{fig:bnfTypeRuleBasic} gives us the whole of our basic JET grammar.
+
+\subsection{Associating Types with Type Rules}
+
+
+\subsection{Typeless Type Rules}
+\begin{figure}[]
+    \begin{prooftree}
+        \LeftLabel{AdNullT: }
+        \AxiomC{}
+        \UnaryInfC{$\Gamma \vdash \lfloor null \rfloor\ valid$}
+    \end{prooftree}
+    \caption{Type rule for a null statement in the Ad language}
+    \label{fig:nullStmntTR}
+\end{figure}
+
+Some languages require that every type rule must have a type associated with it, STLC is an example of such a language; however, this is not the case for all languages.
+For example, in our Ad language only expressions have types associated with them, every other syntactic part of the language is simply referred to as $valid$ if all of the premises of the type rule are true.
+The simplest of one of these type rules is the null statement in the Ad language seen in \autoref{fig:nullStmntTR}, this is a simple type rule where if it is successfully parsed it will always be true as it has no premises.
+This type rule given in JET is represented as:\\
+\begin{lstlisting}[numbers=none]
+typerule AdNullT <- (Stmnt SNull) return {Succ ()}
+\end{lstlisting}
+
+Here, unlike in previous type rules we have seen, we have not specified the type associated with the type rules at all, it has been completely omitted.
+This represents the concept as marking something as $valid$ in the natural deduction rules.
+The code we generate is also substantially different (and much simpler) as we no longer need to check the type as there is no type, we also no longer need to generate an infer function to return a type as again there is no type to return:\\
+\begin{lstlisting}[language=Haskell, numbers=none]
+checkStmnt SNull ctx = Succ ()
+\end{lstlisting}
+You may also notice that the parameter \texttt{jetCheckType} has also been omitted as there is no need for it since there is no type to check.
+
+We could get the same functionality without this feature by having an internal type that represents $valid$.
+In the Ad language we could \texttt{TNNone} for this purpose giving us the type rule:\\
+\begin{lstlisting}[escapechar=\#, numbers=none]
+typerule AdNullT <- (Stmnt SNull) #\textbf{: TNNone} return {Succ ()}
+\end{lstlisting}
+However this is redundant as we are generating more code than necessary as we now have a type to check, where as before we did not.
+This could potentially lead to a loss in performance (albeit a small one) since we are now having to perform an equality check and also have to give the \texttt{jetCheckType} parameter to the check function.
+We will also generate an infer function since there is now the possibility to infer the type of such a statement where as in our original type rule we did not.
+
+\subsection{Type Premises}
+Type rules without premises are some of the most simple type rules as they require nothing other than the consequent to be defined.
+
+
 \section{Interacting Context}
+
 \section{List Notation Type Rules}
 
 %\input{chapters/design/Language.tex}
