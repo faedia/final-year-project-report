@@ -1,4 +1,4 @@
-\chapter{Design of Notation}
+\chapter{Design and Implementation of Notation}
 \label{chap:Method}
 Before we can generate type checking code we need to have a way of specifying the type system such that a program can read the given specification and generate the required code.
 The way we will be specifying the the type system is through a domain specified language I have designed called \textit{JET Expresses Types} (JET).
@@ -7,13 +7,14 @@ This made the most sense as other parts of the compiler pipeline already have do
 
 In JET, rather than using the concrete syntax that is used in the natural deduction rules, we use the abstract syntax provided by the user to define the type rules.
 We are using the abstract syntax for a number of reasons; the first reason is that we are going to be type checking input that has already been parsed therefore we are going to be type checking the abstract syntax tree and not the input of the concrete syntax.
-The second reason, it is possible to type check an intermediate representation of a language, intermediate representations may only be represented through abstract syntax and have no concrete syntax, for example Haskell's intermediate representation (known as core) is type checked during Haskell's compilation process\cite{marlow2004glasgow}.
-Type rules in JET have a have a similar form to the natural deduction rules, such that there is a rule name followed by some judgements and then the consequent.
+The second reason, it is possible to type check an intermediate representation of a language.
+Intermediate representations may only be represented through abstract syntax and have no concrete syntax, for example, Haskell's intermediate representation (known as core) is type checked during Haskell's compilation process\cite{marlow2004glasgow}.
+Type rules in JET have a similar form to the natural deduction rules, such that there is a rule name followed by some judgments and then the consequent.
 This provides a common way of representing type rules even if the way of writing the rules in JET uses an ASCII representation of the natural deduction rules.
 
 The code we are generating is based off of the type checking and type inference algorithm described in Implementing Programming Languages\cite{ranta2012implementing}.
-This is because the the algorithms described are simple yet powerful enough to express common type rules, such as arithmetic expressions and also allow for the use of functions and variables.
-It also makes the code generation quite simple as there is a, more or less, direct translation of type rules to a function in the algorithm.
+This is because the algorithms described are simple, yet powerful enough to express common type rules, such as arithmetic expressions and also allow for the use of functions and variables.
+It also makes the code generation quite simple as there is a direct translation of type rules to a function in the algorithm.
 We will be generating Haskell code, since we can use the features in the Haskell language such as pattern matching and the use of monads to help produce relatively simple code from a given type specification.
 
 \subsection{Example Languages}
@@ -43,6 +44,122 @@ The type system, while having the same primitive types as Ad, is quite different
 The major difference is that we have a function type which is a type that takes an input to an output, often represented as $\tau \rightarrow \sigma$ where $\tau$ is the type of the parameter and $\sigma$ is the type returned by the function.
 This also means that the type system in STLC treats functions as "first-class citizens" as we can give functions as parameters to other functions and return new functions from a given function.
 STLC is based off of the lambda calculus that is given in \textcite{pierce2002types}, they go into much more detail and have more extensions to STLC than we are going to consider here.
+
+Full definitions of the abstract syntax and formal type systems for both of our example languages can be seen in \autoref{appendix:witnessLanguages}.
+JET specifications for both of these languages are also provided.
+
+\section{Overview of the JET Language}
+The JET language has two main structural components: some Haskell code in an initial section\footnote{This is similar flex and bison's C code blocks to provide data structures and functions for the scanner and parser}, followed by a list of type rules.
+The initial Haskell block is to allow the user to define functions and types that are to be used in the following type rules.
+
+In order to write a type system in JET, the user will also have to provide a type which is an instance of a Haskell type class that defines a number of functions that will be useful when interacting with the context, such as looking up a variable in the context and adding an item to the context.
+This type class has been written in such a way to support as many contexts as possible and not limit what kinds of languages JET can support.
+Along with the type class, there is also be an example of how to implement an instance of the type class using a Haskell map as an example.
+
+\subsection{Initial Inline Haskell}
+The block of initial Haskell code, during code generation, will be placed just under the module definition but before the code for the type rules.
+The inline Haskell code blocks take the form of $\{Code\}$, we chose a similar syntactic structure to code blocks in Flex and Bison (and their variants) so that the format will feel familiar to compiler writers.
+As previously mentioned this is where a user can define functions and types required for the generated type checking code.
+For example this is where a user can define the type for the context along with defining the instance of the type class \texttt{JetContext} for the users custom context type.
+It also allows for the ability to import any other Haskell modules, this means that the user can import their Abstract Syntax Definition for that language that may be defined in a separate Haskell module.
+An complete example for a block structured imperative language, similar to Add but with less features, can be seen in \autoref{lst:inlineHaskellCode}.
+Here we define the context to be a 3-tuple which contains return type of the current subprogram, along with two namespaces, one for functions; and one for variables.
+Namespaces, and their uses are discussed in detail ??\todo{ref context sections}.
+These namespaces utilise the JetContextMap provided to the user.
+JetContextMap is a list of Maps, where each Map is a scope in the code.
+The instance of JetContext for JetContextMap is already defined for the user an example of how to define an instance of JetContext.
+
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[caption = Example of initial inline haskell code, label=lst:inlineHaskellCode, language=Haskell]
+{
+import qualified Data.Map as M
+import AbsAd
+
+data ContextKey = Ret | Func Ident [Type] | Var Ident
+    deriving (Eq, Ord, Show, Read)
+
+newtype Context = Context (Type, JetContextMap (Ident, [Type]) Type, JetContextMap Ident Type)
+    deriving (Eq, Ord, Show, Read)
+
+instance JetContextBase Context where
+    emptyContext = Context (TNNone, emptyContext, emptyContext)
+    newBlock (Context (t, f, v) = Context (t, newBlock f, newBlock v)
+
+instance JetContext Context ContextKey Type where
+    lookupContext Ret (Context (r, _, _, _, _)) = return r
+    lookupContext (Func ident ts) (Context (_, _, f, _, _)) = lookupContext (ident, ts) f
+    lookupContext (Var ident) (Context (_, _, _, v, _)) = lookupContext ident v
+    expandContext Ret t (Context (_, p, f, v, s)) = return (Context (t, p, f, v, s))
+    expandContext (Func ident ts) t (Context (rt, p, f, v, s)) = do
+        f' <- expandContextIf (\(i, t) (JetContextMap (b:bs)) -> null (filter (\(i', t') -> i == i') (M.keys b))) (ident, ts) t f
+        return (Context (rt, p, f', v, s))
+    expandContext (Var ident) t (Context (rt, p, f, v, s)) = do
+        v' <- expandContext ident t v
+        return (Context (rt, p, f, v', s))
+
+makeCheckError e t1 t2 = "Type error"
+makeCheckErrorList _ _ _ = "Type error"
+makeInferError _ _ = "Type error"
+}
+\end{lstlisting}
+\end{minipage}
+
+Having this inline code allows the user to specify exactly how they wish the context to function.
+It also allows for a set of standard functions that the user can use to interact with the context, along with adding their own custom functions if and when they need them.
+
+\subsection{Type Rule Format Overview}
+The format of the type rules is extremely similar to the way we represent type rules in the natural deduction logic.
+This allows for simple translation of a natural deduction type rule into one of the type rules written in JET.
+We will delve into more detail about the format of the type rules, but the basic structure of the type rules is as follows
+
+\begin{figure}[]
+    \begin{grammar}
+        <Rule> ::= `typerule' <Identifier> `<-' [ `if' <TypePremiseList> `then' ] <TypeConsequent> `return' <InlineHaskell>
+    \end{grammar}
+    \caption{BNF Grammar rule for defining a JET type rule}
+    \label{}
+\end{figure}
+
+
+The type premise list encased within the if-then is the list of judgments to prove the consequent.
+It is possible for a type rule to require no judgments to prove the consequent so the if-then is optional, therefore, the type premise list can be forced to be nonempty.
+The type premise after the if-then is the consequent we are trying to prove.
+We then have a return keyword followed by some inline Haskell.
+This is to allow the user to return any data that is required for type checking future AST Nodes.
+For example, in our block structured language Ad, blocks are list of declarations followed by a list of statements.
+When checking the declarations we will be adding new variables and subprograms to the context and when we finish checking the declarations we will want to return the context so that those variables and subprograms can be used in the statements.
+If the context was not returned then those declared variables and subprograms would not be found in the context when they should have been.
+The grammar of JET is designed to replicate as much as possible from the natural deduction rules as they are an already accepted way of formally representing type rules.
+The formal grammar can be seen in its entirety in \autoref{appendix:jetLanguage}.
+
+\section{Type Rules}
+Type rules are how we express the type system for which we wish to generate the type checking code for.
+Therefore, the structure and semantics of type rules will determine what language features JET can express and successfully generate correct code for the type checker.
+
+\subsection{Format of a Type Rule}
+\begin{figure}[]
+    \begin{grammar}
+        <TypeConsequent> ::=  <TypeJudgement>
+        
+        <Type> ::= `:' <Identifier> <IdentifierList>
+    
+        <IdentifierList> ::= $\epsilon$ | <Identifier> <IdentifierList>
+    
+        <TypePremiseList> ::= <TypePremise> 
+            \alt <TypePremise> <TypePremiseList>
+    
+        <TypePremise> ::= <InlineHaskell>
+            \alt <InlineHaskell> `|-'  <TypeJudgement>
+    
+        <TypeJudgement> ::= `(' <Identifier> <Identifier> <IdentifierList> `)' [<Type>]
+    \end{grammar}
+    \caption{BNF Grammar rule for constituent parts of a JET type rule}
+    \label{}
+\end{figure}
+
+\section{Interacting Context}
+\section{List Notation Type Rules}
 
 %\input{chapters/design/Language.tex}
 %\input{chapters/design/SimpleTypeRules.tex}
