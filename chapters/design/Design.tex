@@ -70,46 +70,11 @@ These namespaces utilise the JetContextMap provided to the user.
 JetContextMap is a list of Maps, where each Map is a scope in the code.
 The instance of JetContext for JetContextMap is already defined for the user an example of how to define an instance of JetContext.
 
-
-\begin{minipage}{\linewidth}
-\begin{lstlisting}[caption = Example of initial inline haskell code, label=lst:inlineHaskellCode, language=Haskell]
-{
-import qualified Data.Map as M
-import AbsAd
-
-data ContextKey = Ret | Func Ident [Type] | Var Ident
-    deriving (Eq, Ord, Show, Read)
-
-newtype Context = Context (Type, JetContextMap (Ident, [Type]) Type, JetContextMap Ident Type)
-    deriving (Eq, Ord, Show, Read)
-
-instance JetContextBase Context where
-    emptyContext = Context (TNNone, emptyContext, emptyContext)
-    newBlock (Context (t, f, v) = Context (t, newBlock f, newBlock v)
-
-instance JetContext Context ContextKey Type where
-    lookupContext Ret (Context (r, _, _, _, _)) = return r
-    lookupContext (Func ident ts) (Context (_, _, f, _, _)) = lookupContext (ident, ts) f
-    lookupContext (Var ident) (Context (_, _, _, v, _)) = lookupContext ident v
-    expandContext Ret t (Context (_, p, f, v, s)) = return (Context (t, p, f, v, s))
-    expandContext (Func ident ts) t (Context (rt, p, f, v, s)) = do
-        f' <- expandContextIf (\(i, t) (JetContextMap (b:bs)) -> null (filter (\(i', t') -> i == i') (M.keys b))) (ident, ts) t f
-        return (Context (rt, p, f', v, s))
-    expandContext (Var ident) t (Context (rt, p, f, v, s)) = do
-        v' <- expandContext ident t v
-        return (Context (rt, p, f, v', s))
-
-makeCheckError e t1 t2 = "Type error"
-makeCheckErrorList _ _ _ = "Type error"
-makeInferError _ _ = "Type error"
-}
-\end{lstlisting}
-\end{minipage}
-
 Having this inline code allows the user to specify exactly how they wish the context to function.
 It also allows for a set of standard functions that the user can use to interact with the context, along with adding their own custom functions if and when they need them.
 
 \subsection{Type Rule Format Overview}
+\label{sec:typeRuleOverview}
 The format of the type rules is extremely similar to the way we represent type rules in the natural deduction logic.
 This allows for simple translation of a natural deduction type rule into one of the type rules written in JET.
 We will delve into more detail about the format of the type rules, but the basic structure of the type rules is as follows
@@ -139,32 +104,101 @@ Type rules are how we express the type system for which we wish to generate the 
 Therefore, the structure and semantics of type rules will determine what language features JET can express and successfully generate valid code for the type checker.
 We are going to be using the example languages seen in \autoref{sec:exampleLanguages} as motivation for the existence of features and their use.
 
+\subsection{Basic Type Rules}
+\label{sec:basisTypeRules}
 \begin{figure}[]
-    \begin{grammar}
-        <TypeConsequent> ::=  <TypeJudgement>
-        
-    
-        <IdentifierList> ::= $\epsilon$ | <Identifier> <IdentifierList>
-    
-        <TypePremiseList> ::= <TypePremise> 
-            \alt <TypePremise> <TypePremiseList>
-    
-        <TypePremise> ::= <InlineHaskell>
-            \alt <InlineHaskell> `|-'  <TypeJudgement>
-    
-        <TypeJudgement> ::= `(' <Identifier> <Identifier> <IdentifierList> `)' <Type>
-        
-        <Type> ::= $\epsilon$ | `:' <Identifier> <IdentifierList>
-    \end{grammar}
-    \caption{BNF Grammar rule for constituent parts of a JET type rule}
-    \label{fig:bnfTypeRuleComp}
+    \centering
+    \begin{subfigure}[b]{0.5\textwidth}
+        \begin{prooftree}
+            \LeftLabel{STLCIszero: }
+            \AxiomC{$\Gamma \vdash e : Int$}
+            \UnaryInfC{$\Gamma \vdash iszero\ e : Bool$}
+        \end{prooftree}
+        \caption{Type rule for iszero expression in STLC}
+        \label{fig:iszeroTypeRule}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[b]{0.4\textwidth}
+        \begin{prooftree}
+            \LeftLabel{STLCInt: }
+            \AxiomC{}
+            \UnaryInfC{$\Gamma \vdash n : Int$}
+        \end{prooftree}
+        \caption{Type rule for integer literal expression in STLC}
+        \label{fig:intTypeRule}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[b]{0.4\textwidth}
+        \begin{prooftree}
+            \LeftLabel{AdEqT: }
+            \AxiomC{$\Gamma \vdash e_1 : \tau$}
+            \AxiomC{$\Gamma \vdash e_2 : \tau$}
+            \BinaryInfC{$\Gamma \vdash e_1 =  e_2 : Bool$}
+        \end{prooftree}
+        \caption{Type rule for equality expression in Ad}
+        \label{fig:eqTypeRule}
+    \end{subfigure}
+
+    \caption{Examples of simple type rules}
+    \label{fig:simpleTypeRulesExample}
 \end{figure}
 
-We have already seen a brief overview of the structure of type rules; now we will go into more detail about the structure and what sematic meaning different syntactic parts of the type rule have.
-The grammar rule seen in \autoref{fig:bnfTypeRuleComp}, along with the one in \autoref{fig:bnfTypeRuleBasic} gives us the whole of our basic JET grammar.
+The type consequent is the most important part of the type rule, this is because the type consequent tells us exactly what part of the abstract syntax is being type checked along with the type associated with that piece of abstract syntax.
+For example the type consequent for the type rule given in \autoref{fig:iszeroTypeRule} for STLC is:
+\begin{lstlisting}[numbers=none]
+(Expr Iszero e) : TBool
+\end{lstlisting}
+The consequent given represents exactly the same thing as the consequent in the natural deduction rule it simply just uses the abstract syntax that we have specified in \autoref{appendix:witnessLanguages}.
+It is also worth to note that we associate the type consequent by writing a colon and the Haskell constructor or variable of the type we wish to associate with the consequent.
+In this case it is the Haskell that identifies the Boolean type which is \texttt{TBool}.
 
-\subsection{Associating Types with Type Rules}
+Using the natural deduction rule in \autoref{fig:intTypeRule} we can create an example of our JET type rules and code that we generate from such an example.
+The type rule is very simple, having no premises or side conditions, meaning that the type rule in our language should be just as simple:
+\begin{lstlisting}[numbers=none]
+typerule STLCInt <- (Literal LitInt n) : TInt 
+    return {Succ ()};
+\end{lstlisting}
+There are three constituent parts to this type rule.
+The first (\texttt{typerule STLCInt}) has no semantic meaning and is instead just an identifier for the type rule to be used for documentation purposes of the type system.
+The second is the consequent of the type rule, taking a form similar to the previously discussed example, using the abstract syntax to pattern match on the literal expression for integer.
+It is also annotated with the representation, in the abstract syntax, for integer in STLC.
+The final part is the return statement.
+This where any extra data, if necessary, is returned so that is can be used in the rest of the type checking, since this is just checking a literal integer there is no extra information that is useful from this type rule so we just return an empty tuple.
+The type checking function we generate has to assert than the expected type is the same as the type associated with out type rule.
+There are a number of way to do this in Haskell, the way in which we do it is within an if-expression in Haskell:
+\begin{lstlisting}
+checkLiteral (LitInt n) jetCheckType ctx = do
+    if jetCheckType == TInt then Succ () 
+    else Fail (makeCheckError (LitInt n) jetCheckType TInt)
+\end{lstlisting}
+The first thing you may notice is the name of the function, its suffix is the same as the first identifier in the consequent.
+This is because the first identifier in the consequent must always be the type name of AST type we are type checking, in this case we are checking a \texttt{Literal}, in other cases we could be checking an \texttt{Expr} in which case we would replace that first identifier in the consequent.
+This allows us to pattern match against any constructor of a given AST node. For example if we needed to type check against an arbitrary expression in our Ad language, that expression could be a literal expression or an addition expression or any other expression within the language.
+If we were to have unique function for each possible kind of expressions, i.e. \texttt{checkEAdd}, then we could not match against any arbitrary expression, we would need to know the kind of expression before we can call a function.
+However, if each expression is within the same function, then we can use Haskell's pattern matching features to identify what kind of expression it is and then execute the relevant type checking code for that kind of expression.
+From this we can generalise the type consequent so that it has the format of \texttt{HaskellType HaskellTypeConstructor}.
 
+The first parameter (\texttt{LitInt n}) of the function is the Haskell type constructor specified in the consequent, this allows for the required pattern matching so that we can call the correct type checking code.
+The second parameter (\texttt{jetCheckType}) is the expected type to be associated with this type rule, this is the parameter that we will perform the equality check with when asserting whether or not the actual and the expected type match.
+Finally, the last parameter it the current context which we are type checking in.
+In this case the type rule does not interact with the context, however, more complicated type rules may interact with the context so it is required to be a parameter to every type checking function so that is never lost when performing the type checking.
+
+Since this type rule has no premises the body of the function only has to check that the expected and actual type match.
+If they do then we succeed and return whatever the inline Haskell was in the return statement of the type rule.
+If not then we fail and generate some error message from a user defined error function.
+
+We have discussed how to generate a type check function, however that is not the only function that is required. 
+The infer function is used to return the type associated with a type rule so that the type can be used in other areas of the type checking.
+For example, in the type rule show in \autoref{fig:eqTypeRule} we have two type premises both with type $\tau$, in this case $\tau$ is an arbitrary type but both instances of $\tau$ are the same.
+Therefore we need a function that we can call so we can the type of piece of syntax, more commonly this is known as type inference\cite{cardelli1996type}.
+Going back to our previous example (to see examples of type rules with premises go to \autoref{sec:premiseTypeRules}), we wish to generate code that will return the type associated with our type rule.
+In this case we wish to return the type TInt, in this case we produce the following code:
+\begin{lstlisting}[numbers=none]
+inferLiteral (LitInt n) ctx = do Succ TInt
+\end{lstlisting}
+The function signature for our infer function is similar to the signature for our check function.
+The difference is that we no longer require the \texttt{jetCheckType} parameter as we are no longer checking the type associate with our type rule matches some expected type, instead we are returning the type associated with our type rule.\todo{This sentence needs a rewrite}
+Therefore, our function does not require the if-expression, instead we just wish to return the type \texttt{TInt}.
 
 \subsection{Typeless Type Rules}
 \begin{figure}[]
@@ -180,33 +214,299 @@ The grammar rule seen in \autoref{fig:bnfTypeRuleComp}, along with the one in \a
 Some languages require that every type rule must have a type associated with it, STLC is an example of such a language; however, this is not the case for all languages.
 For example, in our Ad language only expressions have types associated with them, every other syntactic part of the language is simply referred to as $valid$ if all of the premises of the type rule are true.
 The simplest of one of these type rules is the null statement in the Ad language seen in \autoref{fig:nullStmntTR}, this is a simple type rule where if it is successfully parsed it will always be true as it has no premises.
-This type rule given in JET is represented as:\\
+This type rule given in JET is represented as:
 \begin{lstlisting}[numbers=none]
 typerule AdNullT <- (Stmnt SNull) return {Succ ()}
 \end{lstlisting}
 
-Here, unlike in previous type rules we have seen, we have not specified the type associated with the type rules at all, it has been completely omitted.
+Here, unlike in previous type rules we have seen in \autoref{sec:basisTypeRules}, we have not specified the type associated with the type rules at all, it has been completely omitted.
 This represents the concept as marking something as $valid$ in the natural deduction rules.
-The code we generate is also substantially different (and much simpler) as we no longer need to check the type as there is no type, we also no longer need to generate an infer function to return a type as again there is no type to return:\\
+The code we generate is also substantially different (and much simpler) as we no longer need to check the type as there is no type, we also no longer need to generate an infer function to return a type as again there is no type to return:
 \begin{lstlisting}[language=Haskell, numbers=none]
-checkStmnt SNull ctx = Succ ()
+checkStmnt SNull ctx = do Succ ()
 \end{lstlisting}
 You may also notice that the parameter \texttt{jetCheckType} has also been omitted as there is no need for it since there is no type to check.
 
 We could get the same functionality without this feature by having an internal type that represents $valid$.
-In the Ad language we could \texttt{TNNone} for this purpose giving us the type rule:\\
+In the Ad language we could \texttt{TNNone} for this purpose giving us the type rule:
 \begin{lstlisting}[escapechar=\#, numbers=none]
 typerule AdNullT <- (Stmnt SNull) #\textbf{: TNNone} return {Succ ()}
 \end{lstlisting}
-However this is redundant as we are generating more code than necessary as we now have a type to check, where as before we did not.
-This could potentially lead to a loss in performance (albeit a small one) since we are now having to perform an equality check and also have to give the \texttt{jetCheckType} parameter to the check function.
+However this is redundant as we are generating more code than necessary because we now have a type to check, where as before we did not.
+This could potentially lead to a loss in performance since we are now having to perform an equality check and also have to give the \texttt{jetCheckType} parameter to the check function.
 We will also generate an infer function since there is now the possibility to infer the type of such a statement where as in our original type rule we did not.
 
 \subsection{Type Premises}
-Type rules without premises are some of the most simple type rules as they require nothing other than the consequent to be defined.
+\label{sec:premiseTypeRules}
+\begin{figure}[]
+    \centering    
+    \begin{subfigure}{0.6\textwidth}
+        \begin{prooftree}
+            \AxiomC{$\Gamma \vdash e_1 : Bool$}
+            \AxiomC{$\Gamma \vdash e_2 : \tau$}
+            \AxiomC{$\Gamma \vdash e_3 : \tau$}
+            \TrinaryInfC{$\Gamma \vdash if\ e_1\ then\ e_2\ else\ e_3 : \tau$}
+        \end{prooftree}
+        \caption{Type rule for STLC if-expression}
+        \label{fig:ifExprTypeRule}
+    \end{subfigure}
+    ~
+    \begin{subfigure}{1\textwidth}
+        \begin{prooftree}
+            \AxiomC{}
+            \RightLabel{Int}
+            \UnaryInfC{$\Gamma \vdash 0 : Int$}
+            \RightLabel{Iszero}
+            \UnaryInfC{$\Gamma \vdash iszero\ 0 : Bool$}
+            \AxiomC{}
+            \RightLabel{Int}
+            \UnaryInfC{$\Gamma \vdash 0 : Int$}
+            \RightLabel{Pred}
+            \UnaryInfC{$\Gamma \vdash pred\ 0 : Int$}
+            \AxiomC{}
+            \RightLabel{Int}
+            \UnaryInfC{$\Gamma \vdash 0 : Int$}
+            \RightLabel{Pred}
+            \UnaryInfC{$\Gamma \vdash pred\ 0 : Int$}
+            \RightLabel{Pred}
+            \UnaryInfC{$\Gamma \vdash pred(pred\ 0) : Int$}
+            \TrinaryInfC{$\Gamma \vdash if\ iszero\ 0\ then\ pred\ 0\ else\ pred\ (pred\ 0)$}
+        \end{prooftree}
+        \caption{Proof tree example for a STLC expression (Type rule names have been abbreviated)}
+        \label{fig:proofTree}
+    \end{subfigure}
+    \caption{Type rule for if-expression and corresponding proof tree example}
+\end{figure}
+So far we have only discussed in detail type rules without premises.
+However, for us to be able to type check and traverse the whole abstract syntax tree given to us by a parser we need to generate code that uses premises.
+For example, if we use the natural deduction rule given in \autoref{fig:ifExprTypeRule}, the type rule we write in JET will need to represent the premises given in this type rule.
+The code we generate will also want to call the code that checks all of the premises given for the type rule.
+Considering the code snipped for STLC \texttt{if iszero 0 then pred 0 else pred (pred 0)} we get the proof tree seen in \autoref{fig:proofTree}.
+We can see that the method of proving a sentence in a language is through recursive application of type rules until we reach a type rule that has no premises causing the proof to terminate, in this case the literal integer type rule acts as our base case for all of our premises.
+The type rules we have already discussed are able to act as base cases to the recursive nature of type checking that we wish to generate code for.
+Therefore, the code we wish to generate for type premises will need to replicate this recursive nature we desire.
 
+Type premises have similar syntax to type consequents.
+There is an extra piece of information that is required for a type premise, that is the context which the type premise is meant to be proved with respect to for now we will be looking at type rules that do not interact with the context go to ?? to see type rules that interact with the context.
+This gives means the general form of the type premise is:
+\begin{grammar}
+<TypePremise> ::= <InlineHaskell> `|-' `(' <Identifier> <Identifier> `)' [`:' <Type>]
+\end{grammar}
+Here, the first $Identifier$ is the type of the AST node for the premise; the second $Identifier$ is the variable that the premise is meant to check; $:\ Type$ is the optional type that is associated with the type premise.
+We are now in a position to write a JET type rule for our type rule given in \autoref{fig:ifExprTypeRule}:
+\begin{lstlisting}
+typerule IfExpr <- if {ctx} |- (Expr e1) : TBool, 
+        {ctx} |- (Expr e2) : t, 
+        {ctx} |- (Expr e3) : t then 
+    (Expr If e1 e2 e3) : t return {Succ ()}
+\end{lstlisting}
+We can see that a type premise list is a comma separated sequence of type premises.
+This also the first time we have seen a JET type variable being used in a type rule.
+There are a few sematic rules about type variables.
+If we have said that the type of a premise is a type variable and this is the first occurrence of the type variable then we will be generating an infer function to get the value that the type that the type variable is to represent.
+Again, if we have said that the type of a premise is a type variable, but this time we have seen the type variable we will generate a check function where the type to check is the already defined type variable, this is to assert the two type variables are consistent.
+Finally, if we use a type variable in the consequent then the variable should have been defined some where in the type premises.
+From these set of rule we end up generating the following code:
+\begin{lstlisting}
+checkExpr (If e1 e2 e3) jetCheckType ctx = do
+    var1 <- checkExpr e1 TBool ctx
+    t <- inferExpr e2 ctx
+    var2 <- checkExpr e3 ctx
+    if jetCheckType == t then Succ () else Fail (makeCheckError (If e1 e2 e3) jetCheckType t)
+inferExpr (If e1 e2 e3) jetCheckType ctx = do
+    var1 <- checkExpr e1 TBool ctx
+    t <- inferExpr e2 ctx
+    var2 <- checkExpr e3 ctx
+    Succ t
+\end{lstlisting}
+As can be seen, the final line of both functions are similar to the bodies of functions that we have seen that did not have type premises.
+The other thing to notice, is that the code generated for the type premises appears in both of our generated functions, this is because in both instances we need to prove premises otherwise anything we state about the consequent could be incorrect.
+Premises are evaluated in the order of left to right in the premise list, and the return value from check functions is stored in a variable with name $var_n$ where n is the next free natural number such that the variable name is unique.
+
+\subsubsection{Type Variables as Parameters to Type Constructors}
+\begin{figure}[]
+    \begin{subfigure}{0.5\textwidth}
+        \begin{prooftree}
+            \LeftLabel{ArrAcc: }
+            \AxiomC{$\Gamma \vdash e : Arr~\tau$}
+            \AxiomC{$\Gamma \vdash n : Int$}
+            \BinaryInfC{$\Gamma \vdash e[n] : \tau$}
+        \end{prooftree}
+    
+        \caption{Type rule for array access in Ad}
+        \label{fig:typeRuleArrAccess}
+    \end{subfigure}
+    ~
+    \begin{subfigure}{0.4\textwidth}
+        \begin{prooftree}
+            \LeftLabel{Fix: }
+            \AxiomC{$\Gamma \vdash e : \tau \rightarrow \tau$}
+            \UnaryInfC{$\Gamma \vdash fix~e : \tau$}
+        \end{prooftree}
+
+        \caption{Type rule for fix point operator in STLC}
+        \label{fig:typeRuleFix}
+    \end{subfigure}
+
+    \caption{Type rules with type variables as part of type constructors}
+    \label{fig:complicatedTypeRules}
+\end{figure}
+
+We can also use type variables as parameters to the constructor of a full type definition.
+Such examples of these types are array types in Ad language, and a function type for STLC.
+All elements in an array, in Ad, are all of the same type, therefore the type rule getting an element of the array will need to extract the type of the elements of the array.
+In the natural deduction rules this is trivial, you represent arrays as $Arr~\tau$ where $\tau$ is the type of the elements of the array.
+We can use a similar form of representing such types in JET.
+For example, the type rule for array access in Ad is seen in \autoref{fig:typeRuleArrAccess}.
+We can write the first type premise in JET in almost exactly the same way:
+\begin{lstlisting}[numbers=none]
+{ctx} |- (Expr e) : TArr t 
+\end{lstlisting}
+From this we can to generate some code of the form:
+\begin{lstlisting}[numbers=none]
+TArr t <- inferExpr e ctx
+\end{lstlisting}
+This code asserts that the type returned from infer function must be an array type, we then get the parameter of the array type and store it in some variable t.
+The generator will also have to add the variable t to the list of known type variables so that if another premise required the use of this type variable then we can generate a check function instead of an infer function.
+There is one issue with the code that we generate at the moment.
+If the return of the infer function does not match the pattern function then the type checker will error, but not with our defined error function since the error was an internal Haskell error.
+Instead the right hand side of the binding will want to call our error function in case of a bad patter match, from this criteria we produce the follow code:
+\begin{lstlisting}[numbers=none]
+TArr t <- case inferExpr e ctx of Succ jet0@(TArr t) -> Succ jet0; Succ t -> Fail (makeInferError t t); x -> x
+\end{lstlisting}
+
+\subsubsection{Side Conditions as Premises}
+
+There is another example of such a similar type rule, but instead this is part of STLC, can be seen in \autoref{fig:typeRuleFix}.
+As can be seen there is the type $\tau \rightarrow \tau$ where both instances of $\tau$ are the same.
+We would like to write the type premise as:
+\begin{lstlisting}[numbers=none]
+{ctx} |- (Expr e) : TFun t t
+\end{lstlisting}
+Where we assert that both instances of \texttt{t} are the same.
+However the code we generate for this is not correct as we do not assert that both instances of \texttt{t} are the same, instead \texttt{t} is always the value of the second parameter to the type constructor.
+Therefore, we write the type premise as:
+\begin{lstlisting}
+{ctx} |- (Expr e) : TFun t1 t2
+\end{lstlisting}
+We also write a side condition premise such that asserts that \texttt{t1} and \texttt{t2} are the same and creates a new type variable \texttt{t} which is the same as \texttt{t1} and \texttt{t2}.
+A side condition premise is piece of inline Haskell that is inserted into the generated code as a monadic statement, the used of the side conditions can be extremely varied in functionality and can do anything that the user requires that cannot be done as part of normal type premises.
+One of the major uses of Haskell side conditions is for retireving or expanding the context that we will seen in \autoref{sec:context}.
+Giving us the full type rule as follows:
+\begin{lstlisting}
+typerule Fix <- if {ctx} |- (Expr e) : TFun t1 t2, 
+        {if t1 == t2 then Succ t1 else Fail "type error"} then 
+    (Expr Fix e) : t1 return {Succ ()};
+\end{lstlisting}
 
 \section{Interacting Context}
+\label{sec:context}
+Handling the context in JET is done through Haskell side condition to call functions that will get data from or insert data into the context.
+As the user can write any code they want it may initially seem unintuitive as to what is the best way to interact with the context.
+This is why the tool will provide the modules that can be seen in\todo{autoref to haskell modules appendix}, which will allow the user to instantiate a small number of Haskell type classes\todo{cite type classes} that will give the user a common interface with their defined context.
+It is important to note that these modules do not define the context for the user, the user will have to define their own context type and instantiate the Haskell type classes for their own context type.
+This is because many different languages can have contexts that work in wildly different ways and letting the user define their own context gives them greater control on the semantics of the context.
+There is an example provided to the user of how to do this used Haskell Data Maps\todo{cite data maps} so that the user is not on their own in this regard.
+\subsection{Empty Contexts and Blocks}
+The most basic things you can do with a context is create an empty context or add a new block.
+An empty context should do exactly what the name suggests, it should create a new context that has no items in it.
+Since the user implements all the functions they should ensure that their function meets these semantic requirements.
+We will assume that all languages will have a block structure, and if a language does not that this can be modelled by having a context which will only ever have one block.
+How the context represents blocks is up to the user, however in our witness languages a single block is a map and our context is made up of a list of blocks.
+So when we implement out new block function for our context we will prepend to the list a new empty map, this is to meet the requirement of the new block function that each new block should have no items in it.
+Adding a new block is fairly simple with in the type rule, within the context definition of a type premise within a type rule you call the new block function on the context that you wish to add a new block in, for example:\\\texttt{{(newBlock ctx)} |- ($TypePremise$)}
+this also produces very simply code where we would usually have the variable \texttt{ctx} we now have the code \texttt{(newBlock ctx)} giving us the whole type premise of\\\texttt{$variable$ <- $TypePremiseFunc$ $TypePremiseParams$ (newBlock ctx)}
+\subsection{Variables}
+The most common use of the context is when attempting to type check the use of variables within a program.
+We will want to do two main actions with variables, the first is to retrieve the type of a variable from the context, the second is to add a new variable with a given type to the context.
+Retrieving the type of a variable from the context is given by the natural deduction rule in \autoref{fig:varTypeRule}.
+The consequent is trivial and is the same as the ones we have seen throughout \autoref{sec:basisTypeRules}.
+We still need to retrieve the arbitrary type $\tau$ from the context.
+this can be done by using the function, given by the \texttt{JetContext} type class, \texttt{lookupContext}.
+This function, given some a parameter to identify the item in the context (such as the variable name), will return the type associated with the input, or will return some fail message within the \texttt{JetError} monad.
+When using this in a Haskell side condition we will want to bind the resulting type from the context to the variable that we are going to use as the type for the consequent.
+If we say that the return variable of the consequent is \texttt{t}, then we will want to write the side condition as \texttt{\{t <- lookupContext var ctx\}}, where \texttt{var} is the variable to lookup and \texttt{ctx} is the given context to perform the lookup in.
+We do not do anything special when generating the code from a Haskell side condition, we simply put it directly into the generated code in the position it occurs in the premise list (In this example it is the only premise so that does not matter just as long as it appears before the return monadic statement).
+
+\begin{figure}
+    \begin{prooftree}
+        \LeftLabel{VarT: }
+        \RightLabel{$[v : \tau \in \Gamma]$}
+        \AxiomC{}
+        \UnaryInfC{$\Gamma \vdash v : \tau$}
+    \end{prooftree}
+    \caption{Type rule for using a variable in the Simply Typed Lambda Calculus and Ad languages}
+    \label{fig:varTypeRule}
+\end{figure}
+
+We can now retrieve types of variables from the context, however, that is not useful unless we can add variables to the context.
+We will be using the example that can be seen in \autoref{fig:varDeclTypeRule} taken from the Ad language.
+In this case we don't have any side conditions or premises, we only have the consequent which has the context $\Gamma$ but also has the variable and type added to the context.
+We therefore need a way to represent this behaviour in the return part of our type rule so that we can give this new context to the rest of the type checker that requires it.
+We do this by writing the required Haskell at the end of the type rule after the return keyword.
+In order to add the variable to the context will want to use the function, given by the \texttt{JetContext} type class, \texttt{expandContext} which takes in something to identify the item (the variable), the type to be associated and the context to add the item to.
+This function may fail depending upon what the required semantics the user wants, for example a user may not want to be able to declare the same variable twice, and in other languages this may be allowed.
+The user is able to define this functionality when defining the instance of the type class.
+To use this function in the type rule we will want write something similar that was seen in the use of a variable but is slightly more complicated.
+We will want to write \texttt{\{expandContext var t ctx\}}, this will add (if it is possible) the variable \texttt{var} with type \texttt{t} to the context given by \texttt{ctx}.
+this gives us the whole type rule:
+\begin{lstlisting}[numbers=none]
+typerule VarDeclT <- (VarDecl var t) return \{expandContext var t ctx\}
+\end{lstlisting}
+where the \texttt{expandContext} function call replaces the \texttt{()} that we have used in every other type rule seen so far.
+
+\begin{figure}
+    \begin{prooftree}
+        \LeftLabel{AdVarDecl: }
+        \AxiomC{}
+        \UnaryInfC{$\Gamma, v : \tau \vdash \lfloor v : \tau \rfloor\ valid$}
+    \end{prooftree}
+    \caption{Type rule for variable declaration in the Ad language}
+    \label{fig:varDeclTypeRule}
+\end{figure}
+
+\subsection{Procedures and Functions}
+Type checking functions in the Simply Typed Lambda Calculus is exactly the same as type checking variables as functions are first class citizens in the Simply Typed Lambda Calculus.
+However, this is not the same in the Ad language (or in many other similar imperative languages such as C or Ada).
+
+In order to type check procedures and functions we have used the concept of namespaces from \textcite{grimm2007typical}.
+Namespaces are a way of segregating identifiers based upon their declaration and use.
+For example, in our Ad language we have to ways to call a subprogram (function or procedure), one is an expression therefore it requires a return type, the other is a statement and therefore requires not to have a return type.
+From this we can identify in the expression call we need to check for a function, and in our statement call we need to check for a procedure.
+We can also check for the difference between a function call and the use of a variable.
+These will therefore all come under different "contexts" within our actual context, we will refer to these as namespaces to avoid the use of conflicting names.
+We can interact with different namespaces by defined our new type, which will be our context identifier type.
+In this type we will have multiple constructors, one for variables, one for function, and one for procedures, this allows us to tell the difference between the variables procedures and function within our JetContext instance and perform different actions accordingly.
+
+Now we can discus how to type check functions and procedures.
+They are very similar in structure and semantics, they both have a list of variable declaration to type check, they also both have a block structure as their body.
+These consist of the premises.
+We then want to add the whole subprogram declaration to the outer scope that it is contained in so that we can be used in the block it is declared in.
+We will also want to add the subprogram declaration to the inner scope so that we can use the subprogram recursively.
+So if we have a consequent \texttt{(ProcDecl PDecl ident vdecls decls stmnts)}, where ident is the name of the procedure, vdecls are the variable declaration for the parameters of the procedure, decls is the initial declaration block of the procedure, and stmnts is the statement block of the procedure.
+We will want the type rule given in \autoref{lst:jetProcPremises}.
+\begin{lstlisting}[caption = Jet premise list for procedures., label=lst:jetProcPremises]
+If {let ts = map (\(VDecl _ t) -> t) vdecls},
+    {ctx' <- expandContext (Proc ident ts) TNNone (updateRetType ctx TNNone)}
+    {(newBlock ctx')} |- [VarDecl vdecls], 
+    {var1} |- [Decl decls], 
+    {var2} |- [Stmnt stmnts]
+then (ProcDecl PDecl ident vdecls decls stmnt) return {return ctx'}
+\end{lstlisting}
+
+The first 2 premises are side conditions to define variables that can be used later on in the premise list or in the consequent.
+The first simply gets the list of types from the list of variable declarations.
+Next we add the procedure to the given context as this will be required in another type premise and in the consequent.
+We then are able to type check the rest of the procedure declaration, the first thing we should do is type check the variable declaration to make sure that they are well formed before we can type check anything else, it is worth to note that here we add a new block to the context so as the parameters should belong to a new block.
+We can then type check the list of normal declarations, with the new context returned by the variable declarations (this makes sure that we do not redeclare a parameter in the declaration list).
+Finally we can check the body of the function, we give this the context given by the previous type premise, this is so it has visibility of all of the declarations and the parameters.
+It will also have the procedure in the context so that we can recursively call the procedure.
+We have already covered the consequent, the next thing to cover then is the return statement.
+This is simply just to return the context that has the procedure declaration added to it.
+We should not need to cover the generated code for this as we have discussed all the features that we have used to write this type rule previously, we are simply demonstrating how you would use those features to type check a procedure.
+
+Functions are more or less identical expect we have the return type of the function that goes in place of the \texttt{TNNone} placeholder.
+We will also want to set the current return type so that when we are type checking a return statement we can successfully check the type of the expression to return and the expected return type.
 
 \section{List Notation Type Rules}
 
