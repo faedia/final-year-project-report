@@ -4,8 +4,19 @@ As per the aims given in \todo{autoref to aims}, we have discussed how to type c
 The full type specification in JET along with the natural deduction rules that we are implementing in our JET specification can also be seen in \autoref{appendix:witnessLanguages}.
 While we have not discussed how to type check user defined types and record types, the JET specification for the Ad language does support these language features and does successfully type check them.
 We did not discuss these type rules because there are no other features in the language that allow for a better representation of user defined types and record types than the representation that can be seen in the JET specification of the Ad language.
+Both of our example languages have varying differing paradigms and language structure meeting one of our first main criteria of the project which was to be able type check simple programming languages from different paradigms.
+The first of our languages, Ad was a small imperative block structured language which had variable, function and procedures along with a few primitive statements and expressions.
+Where as STLC was a functional programming language which allowed for the use of functions as first class citizens along with higher order functions.
+These two languages represent two main paradigms in programming languages and provide a base from which to implement other features in the future which would allow the extension of the type systems in these languages.
+The type system features that could be added to these languages are, in brief, for Ad the use of extending record type to have the ability of subtyping and also implementing full object orientations; and in STLC the addition of recursive types\cite{pierce2002types,cardelli1996type} and polymorphic types\cite{Cardelli:1985:UTD:6041.6042}.
+While these features are were not a requirement, they were mentioned as possible end goals that a full tool (JET is currently still a prototype) would need to support, otherwise there would be too many languages that JET would not support, therefore JET would  only be useful to generate code for simple and small languages.  
 
 \section{Language Structure and Extensions}
+One of the major short comings for the tool is the representation of the context, in part both how it is defined and used throughout a given type system.
+As mentioned in ?? \todo{ref to typical}, I think the representation of the context in typical is one of the best, it gives the user the ability to customise the type system as they wish but also provides a notation that is intuitive and easy to use.
+We tried, as much as possible to make the definition of the type classes, used to define the contexts, as easy to use as possible and to help give the user an idea of what information may be required to build a specification in JET.
+However a nicer notation for defining namespaces would most likely make the tool easier to use than it is in its current form, as at the moment you have to write a fair amount of Haskell in order to get the context to function as required, however, the inclusion of the predefined instance of the type class for \texttt{JetContextMap} does help provide a base for how the user will define their namespaces.
+
 Support for context function directly in the grammar i.e x in y : t should generate t <- lookupContext x y
 Also built in support for namespaces, generalise contexts a bit.
 
