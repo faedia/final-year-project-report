@@ -213,14 +213,14 @@ Therefore, our function does not require the if-expression, instead we just wish
 
 Some languages require that every type rule must have a type associated with it, STLC is an example of such a language; however, this is not the case for all languages.
 For example, in our Ad language only expressions have types associated with them, every other syntactic part of the language is simply referred to as $valid$ if all of the premises of the type rule are true.
-The simplest of one of these type rules is the null statement in the Ad language seen in \autoref{fig:nullStmntTR}, this is a simple type rule where if it is successfully parsed it will always be true as it has no premises.
+The simplest of these type rules is the null statement in the Ad language seen in \autoref{fig:nullStmntTR}, this is a simple type rule where if it is successfully parsed it will always be true as it has no premises.
 This type rule given in JET is represented as:
 \begin{lstlisting}[numbers=none]
 typerule AdNullT <- (Stmnt SNull) return {Succ ()}
 \end{lstlisting}
 
 Here, unlike in previous type rules we have seen in \autoref{sec:basisTypeRules}, we have not specified the type associated with the type rules at all, it has been completely omitted.
-This represents the concept as marking something as $valid$ in the natural deduction rules.
+This represents the concept of marking something as $valid$ in the natural deduction rules.
 The code we generate is also substantially different (and much simpler) as we no longer need to check the type as there is no type, we also no longer need to generate an infer function to return a type as again there is no type to return:
 \begin{lstlisting}[language=Haskell, numbers=none]
 checkStmnt SNull ctx = do Succ ()
@@ -232,7 +232,7 @@ In the Ad language we could \texttt{TNNone} for this purpose giving us the type 
 \begin{lstlisting}[escapechar=\#, numbers=none]
 typerule AdNullT <- (Stmnt SNull) #\textbf{: TNNone} return {Succ ()}
 \end{lstlisting}
-However this is redundant as we are generating more code than necessary because we now have a type to check, where as before we did not.
+However, this is redundant as we are generating more code than necessary because we now have a type to check, where as before we did not.
 This could potentially lead to a loss in performance since we are now having to perform an equality check and also have to give the \texttt{jetCheckType} parameter to the check function.
 We will also generate an infer function since there is now the possibility to infer the type of such a statement where as in our original type rule we did not.
 
@@ -288,8 +288,8 @@ We can see that the method of proving a sentence in a language is through recurs
 The type rules we have already discussed are able to act as base cases to the recursive nature of type checking that we wish to generate code for.
 Therefore, the code we wish to generate for type premises will need to replicate this recursive nature we desire.
 
-Type premises have similar syntax to type consequents.
-There is an extra piece of information that is required for a type premise, that is the context which the type premise is meant to be proved with respect to for now we will be looking at type rules that do not interact with the context go to ?? to see type rules that interact with the context.
+Type premises have a similar syntax to type consequents.
+More information that is required for a type premise, namely the context which the type premise is meant to be proved with respect to, for now we will be looking at type rules that do not interact with the context (go to \autoref{sec:context} to see type rules that interact with the context).
 This gives means the general form of the type premise is:
 \begin{grammar}
 <TypePremise> ::= <InlineHaskell> `|-' `(' <Identifier> <Identifier> `)' [`:' <Type>]
@@ -305,10 +305,10 @@ typerule IfExpr <- if {ctx} |- (Expr e1) : TBool,
 We can see that a type premise list is a comma separated sequence of type premises.
 This also the first time we have seen a JET type variable being used in a type rule.
 There are a few sematic rules about type variables.
-If we have said that the type of a premise is a type variable and this is the first occurrence of the type variable then we will be generating an infer function to get the value that the type that the type variable is to represent.
+If we have said that the type of a premise is a type variable and this is the first occurrence of the type variable then we will be generating an infer function to get the value that the type variable is to represent.
 Again, if we have said that the type of a premise is a type variable, but this time we have seen the type variable we will generate a check function where the type to check is the already defined type variable, this is to assert the two type variables are consistent.
 Finally, if we use a type variable in the consequent then the variable should have been defined some where in the type premises.
-From these set of rule we end up generating the following code:
+From this set of rule we end up generating the following code:
 \begin{lstlisting}
 checkExpr (If e1 e2 e3) jetCheckType ctx = do
     var1 <- checkExpr e1 TBool ctx
@@ -355,7 +355,7 @@ Premises are evaluated in the order of left to right in the premise list, and th
 \end{figure}
 
 We can also use type variables as parameters to the constructor of a full type definition.
-Such examples of these types are array types in Ad language, and a function type for STLC.
+Such examples of these types are array types in the Ad language, and a function type for STLC.
 All elements in an array, in Ad, are all of the same type, therefore the type rule getting an element of the array will need to extract the type of the elements of the array.
 In the natural deduction rules this is trivial, you represent arrays as $Arr~\tau$ where $\tau$ is the type of the elements of the array.
 We can use a similar form of representing such types in JET.
@@ -368,18 +368,18 @@ From this we can to generate some code of the form:
 \begin{lstlisting}[numbers=none]
 TArr t <- inferExpr e ctx
 \end{lstlisting}
-This code asserts that the type returned from infer function must be an array type, we then get the parameter of the array type and store it in some variable t.
+This code asserts that the type returned from the infer function must be an array type, we then get the parameter of the array type and store it in some variable t.
 The generator will also have to add the variable t to the list of known type variables so that if another premise required the use of this type variable then we can generate a check function instead of an infer function.
 There is one issue with the code that we generate at the moment.
 If the return of the infer function does not match the pattern function then the type checker will error, but not with our defined error function since the error was an internal Haskell error.
-Instead the right hand side of the binding will want to call our error function in case of a bad patter match, from this criteria we produce the follow code:
+Instead the right hand side of the binding will want to call our error function in case of a bad pattern match, from this criteria we produce the follow code:
 \begin{lstlisting}[numbers=none]
 TArr t <- case inferExpr e ctx of Succ jet0@(TArr t) -> Succ jet0; Succ t -> Fail (makeInferError t t); x -> x
 \end{lstlisting}
 
-\subsubsection{Side Conditions as Premises}
+\subsubsection{Side Conditions as Premises'}
 
-There is another example of such a similar type rule, but instead this is part of STLC, can be seen in \autoref{fig:typeRuleFix}.
+There is another example of such a type rule, but instead this is part of STLC, can be seen in \autoref{fig:typeRuleFix}.
 As can be seen there is the type $\tau \rightarrow \tau$ where both instances of $\tau$ are the same.
 We would like to write the type premise as:
 \begin{lstlisting}[numbers=none]
@@ -393,7 +393,7 @@ Therefore, we write the type premise as:
 \end{lstlisting}
 We also write a side condition premise such that asserts that \texttt{t1} and \texttt{t2} are the same and creates a new type variable \texttt{t} which is the same as \texttt{t1} and \texttt{t2}.
 A side condition premise is piece of inline Haskell that is inserted into the generated code as a monadic statement, the used of the side conditions can be extremely varied in functionality and can do anything that the user requires that cannot be done as part of normal type premises.
-One of the major uses of Haskell side conditions is for retireving or expanding the context that we will seen in \autoref{sec:context}.
+One of the major uses of Haskell side conditions is for retrieving or expanding the context that we will see in \autoref{sec:context}.
 Giving us the full type rule as follows:
 \begin{lstlisting}
 typerule Fix <- if {ctx} |- (Expr e) : TFun t1 t2, 
@@ -401,23 +401,24 @@ typerule Fix <- if {ctx} |- (Expr e) : TFun t1 t2,
     (Expr Fix e) : t1 return {Succ ()};
 \end{lstlisting}
 
-\section{Interacting Context}
+\section{Interacting with the Context}
 \label{sec:context}
 Handling the context in JET is done through Haskell side condition to call functions that will get data from or insert data into the context.
 As the user can write any code they want it may initially seem unintuitive as to what is the best way to interact with the context.
 This is why the tool will provide the modules that can be seen in\todo{autoref to haskell modules appendix}, which will allow the user to instantiate a small number of Haskell type classes\todo{cite type classes} that will give the user a common interface with their defined context.
 It is important to note that these modules do not define the context for the user, the user will have to define their own context type and instantiate the Haskell type classes for their own context type.
 This is because many different languages can have contexts that work in wildly different ways and letting the user define their own context gives them greater control on the semantics of the context.
-There is an example provided to the user of how to do this used Haskell Data Maps\todo{cite data maps} so that the user is not on their own in this regard.
+There is an example provided to the user of how to do this using Haskell Data Maps\todo{cite data maps} so that the user is not on their own in this regard.
 \subsection{Empty Contexts and Blocks}
 The most basic things you can do with a context is create an empty context or add a new block.
 An empty context should do exactly what the name suggests, it should create a new context that has no items in it.
 Since the user implements all the functions they should ensure that their function meets these semantic requirements.
-We will assume that all languages will have a block structure, and if a language does not that this can be modelled by having a context which will only ever have one block.
+We will assume that all languages will have a block structure, and if a language does not than it can be modelled by having a context which will only ever have one block.
 How the context represents blocks is up to the user, however in our witness languages a single block is a map and our context is made up of a list of blocks.
-So when we implement out new block function for our context we will prepend to the list a new empty map, this is to meet the requirement of the new block function that each new block should have no items in it.
+So when we implement our new block function for our context we will prepend to the list a new empty map, this is to meet the requirement of the new block function that each new block should have no items in it.
 Adding a new block is fairly simple with in the type rule, within the context definition of a type premise within a type rule you call the new block function on the context that you wish to add a new block in, for example:\\\texttt{{(newBlock ctx)} |- ($TypePremise$)}
-this also produces very simply code where we would usually have the variable \texttt{ctx} we now have the code \texttt{(newBlock ctx)} giving us the whole type premise of\\\texttt{$variable$ <- $TypePremiseFunc$ $TypePremiseParams$ (newBlock ctx)}
+this also produces very simple code.
+Where we would usually have the variable \texttt{ctx} we now have the code \texttt{(newBlock ctx)} giving us the whole type premise of\\\texttt{$variable$ <- $TypePremiseFunc$ $TypePremiseParams$ (newBlock ctx)}
 \subsection{Variables}
 The most common use of the context is when attempting to type check the use of variables within a program.
 We will want to do two main actions with variables, the first is to retrieve the type of a variable from the context, the second is to add a new variable with a given type to the context.
@@ -447,9 +448,9 @@ In this case we don't have any side conditions or premises, we only have the con
 We therefore need a way to represent this behaviour in the return part of our type rule so that we can give this new context to the rest of the type checker that requires it.
 We do this by writing the required Haskell at the end of the type rule after the return keyword.
 In order to add the variable to the context will want to use the function, given by the \texttt{JetContext} type class, \texttt{expandContext} which takes in something to identify the item (the variable), the type to be associated and the context to add the item to.
-This function may fail depending upon what the required semantics the user wants, for example a user may not want to be able to declare the same variable twice, and in other languages this may be allowed.
+This function may fail depending upon what semantics the user wants, for example a user may not want to be able to declare the same variable twice, and in other languages this may be allowed.
 The user is able to define this functionality when defining the instance of the type class.
-To use this function in the type rule we will want write something similar that was seen in the use of a variable but is slightly more complicated.
+To use this function in the type rule we will write something similar to what was seen in the use of a variable but is slightly more complicated.
 We will want to write \texttt{\{expandContext var t ctx\}}, this will add (if it is possible) the variable \texttt{var} with type \texttt{t} to the context given by \texttt{ctx}.
 this gives us the whole type rule:
 \begin{lstlisting}[numbers=none]
@@ -478,7 +479,7 @@ From this we can identify in the expression call we need to check for a function
 We can also check for the difference between a function call and the use of a variable.
 These will therefore all come under different "contexts" within our actual context, we will refer to these as namespaces to avoid the use of conflicting names.
 We can interact with different namespaces by defined our new type, which will be our context identifier type.
-In this type we will have multiple constructors, one for variables, one for function, and one for procedures, this allows us to tell the difference between the variables procedures and function within our JetContext instance and perform different actions accordingly.
+In this type we will have multiple constructors, one for variables, one for functions, and one for procedures, this allows us to tell the difference between the variables procedures and functions within our JetContext instance and perform different actions accordingly.
 
 Now we can discus how to type check functions and procedures.
 They are very similar in structure and semantics, they both have a list of variable declaration to type check, they also both have a block structure as their body.
@@ -496,6 +497,7 @@ If {let ts = map (\(VDecl _ t) -> t) vdecls},
 then (ProcDecl PDecl ident vdecls decls stmnt) return {return ctx'}
 \end{lstlisting}
 
+\todo{May have to rewrite}
 The first 2 premises are side conditions to define variables that can be used later on in the premise list or in the consequent.
 The first simply gets the list of types from the list of variable declarations.
 Next we add the procedure to the given context as this will be required in another type premise and in the consequent.
@@ -507,7 +509,7 @@ We have already covered the consequent, the next thing to cover then is the retu
 This is simply just to return the context that has the procedure declaration added to it.
 We should not need to cover the generated code for this as we have discussed all the features that we have used to write this type rule previously, we are simply demonstrating how you would use those features to type check a procedure.
 
-Functions are more or less identical expect we have the return type of the function that goes in place of the \texttt{TNNone} placeholder.
+Functions are more or less identical except we have the return type of the function that goes in place of the \texttt{TNNone} placeholder.
 We will also want to set the current return type so that when we are type checking a return statement we can successfully check the type of the expression to return and the expected return type.
 
 \section{List Notation Type Rules}
