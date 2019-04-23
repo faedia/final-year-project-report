@@ -65,7 +65,7 @@ For example this is where a user can define the type for the context along with 
 It also allows for the ability to import any other Haskell modules, this means that the user can import their Abstract Syntax Definition for that language that may be defined in a separate Haskell module.
 An complete example for a block structured imperative language, similar to Add but with less features, can be seen in \autoref{lst:inlineHaskellCode}.
 Here we define the context to be a 3-tuple which contains return type of the current subprogram, along with two namespaces, one for functions; and one for variables.
-Namespaces, and their uses are discussed in detail ??\todo{ref context sections}.
+Namespaces, and their uses are discussed in detail \autoref{sec:context}.
 These namespaces utilise the JetContextMap provided to the user.
 JetContextMap is a list of Maps, where each Map is a scope in the code.
 The instance of JetContext for JetContextMap is already defined for the user an example of how to define an instance of JetContext.
@@ -238,6 +238,7 @@ We will also generate an infer function since there is now the possibility to in
 
 \subsection{Type Premises}
 \label{sec:premiseTypeRules}
+
 \begin{figure}[]
     \centering    
     \begin{subfigure}{0.6\textwidth}
@@ -277,6 +278,7 @@ We will also generate an infer function since there is now the possibility to in
     \end{subfigure}
     \caption{Type rule for if-expression and corresponding proof tree example}
 \end{figure}
+
 So far we have only discussed in detail type rules without premises.
 However, for us to be able to type check and traverse the whole abstract syntax tree given to us by a parser we need to generate code that uses premises.
 For example, if we use the natural deduction rule given in \autoref{fig:ifExprTypeRule}, the type rule we write in JET will need to represent the premises given in this type rule.

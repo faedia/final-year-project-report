@@ -12,15 +12,33 @@ The type system features that could be added to these languages are, in brief, f
 While these features are were not a requirement, they were mentioned as possible end goals that a full tool (JET is currently still a prototype) would need to support, otherwise there would be too many languages that JET would not support, therefore JET would  only be useful to generate code for simple and small languages.  
 
 \section{Language Structure and Extensions}
-One of the major short comings for the tool is the representation of the context, in part both how it is defined and used throughout a given type system.
+One of the major short comings of JET is the representation of the context, both how it is defined and used throughout a given type system.
 As mentioned in ?? \todo{ref to typical}, I think the representation of the context in typical is one of the best, it gives the user the ability to customise the type system as they wish but also provides a notation that is intuitive and easy to use.
 We tried, as much as possible to make the definition of the type classes, used to define the contexts, as easy to use as possible and to help give the user an idea of what information may be required to build a specification in JET.
-However a nicer notation for defining namespaces would most likely make the tool easier to use than it is in its current form, as at the moment you have to write a fair amount of Haskell in order to get the context to function as required, however, the inclusion of the predefined instance of the type class for \texttt{JetContextMap} does help provide a base for how the user will define their namespaces.
+However a nicer notation for defining namespaces would most likely make the tool easier to use than it is in its current form, currently you have to write a fair amount of Haskell in order to get the context to act as required.
+The inclusion of the predefined instance of the type class for \texttt{JetContextMap} does help provide a base for how the user will define their namespaces.
+The lack of language support for functions defined by the Haskell type class reduces the usability of the tool.
+This could be fixed by adding extra statements in the language.
+For example is we were to attempt to lookup an item in the context in STLC, instead of writing the premise using inline haskell as \texttt{\{t <- lookupContext var ctx\}}.
+We could instead have a piece of syntax in JET that encodes this meaning, for example we could have a grammar rule that has a keyword lookup and takes an item to lookup and a context to lookup withing, an example BNF grammar rule can be seen in \autoref{fig:LookupBNF}.
+Using this grammar rule the type premise would be rewritten as \texttt{var lookup context : t}.
+This would then be generated into the code that appeared in the initial type premise.
 
-Support for context function directly in the grammar i.e x in y : t should generate t <- lookupContext x y
-Also built in support for namespaces, generalise contexts a bit.
+\begin{figure}[]
+    \centering
+    \begin{grammar}
+        <TypePremise> ::= \dots \alt <Identifier> `lookup' <Identifier> `:' <Identifier>
+    \end{grammar}
+    \caption{}
+    \label{fig:LookupBNF}
+\end{figure}
 
-Language support for user defined types for user defined types.
+I have mentioned that we can type check user defined types.
+This is true, however, it requires excessive use of user defined Haskell functions, and also takes advantages of how the language is structured and how we generate the output code.
+Using odd side affects of the language design to get the required behavior is obviously leads to unintuitive and hard to read type rules.
+Therefore, an area of future work to be performed, for JET specifically, would be to design and implement a notation that provides a more intuitive method of performing type checking for user defined types along with record types etc.
+This would greatly improve the usability of the tool, making it easier to implement a type checker for a language with a type system involving user defined types.
+Possibly even making it quite simple to type check object oriented language which is class of language that we have not discussed but in the current state would require similar type rules to the ones in Ad for record types.
 
 Unify algorithm and type reconstruction support and notation on how to specify how to unify types, will need to cite hindly milner type inference.
 
