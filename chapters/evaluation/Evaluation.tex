@@ -1,57 +1,40 @@
-\chapter{Evaluation}
+\chapter{Evaluation and Conclusion}
+\label{chap:eval}
 Given all of the features and type rule patterns we have discussed in \autoref{chap:Method} we can successfully type check both of our witness languages.
-As per the aims given in \todo{autoref to aims}, we have discussed how to type check all but user defined types.
+As per the aims given in \autoref{itms:aims}, we have discussed how to type check all but user defined types.
 The full type specification in JET along with the natural deduction rules that we are implementing in our JET specification can also be seen in \autoref{appendix:witnessLanguages}.
 While we have not discussed how to type check user defined types and record types, the JET specification for the Ad language does support these language features and does successfully type check them.
 We did not discuss these type rules because there are no other features in the language that allow for a better representation of user defined types and record types than the representation that can be seen in the JET specification of the Ad language.
-Both of our example languages have varying differing paradigms and language structure meeting one of our first main criteria of the project which was to be able type check simple programming languages from different paradigms.
+
+Both of our example languages have differing paradigms and language structure meeting one of our first main criteria of the project which was to be able type check simple programming languages from different paradigms.
 The first of our languages, Ad was a small imperative block structured language which had variable, function and procedures along with a few primitive statements and expressions.
 Where as STLC was a functional programming language which allowed for the use of functions as first class citizens along with higher order functions.
 These two languages represent two main paradigms in programming languages and provide a base from which to implement other features in the future which would allow the extension of the type systems in these languages.
 The type system features that could be added to these languages are, in brief, for Ad the use of extending record type to have the ability of subtyping and also implementing full object orientations; and in STLC the addition of recursive types\cite{pierce2002types,cardelli1996type} and polymorphic types\cite{Cardelli:1985:UTD:6041.6042}.
-While these features are were not a requirement, they were mentioned as possible end goals that a full tool (JET is currently still a prototype) would need to support, otherwise there would be too many languages that JET would not support, therefore JET would  only be useful to generate code for simple and small languages.  
+While these features are not a requirement, they were mentioned as possible end goals that a full tool (JET is currently still a prototype) would need to support.
+They would almost certainly be required for a complete tool to support a large variety of complex language, i.e. languages such as Ada or Haskell.
 
-\section{Language Structure and Extensions}
-Syntactically, the language is similar to natural deduction rules, which sets it apart from a tool such as typical\cite{grimm2007typical} which have is a programming language with some extra syntactic features to help with writing type checkers.
-This is main advantage of this tool that it is designed to represent the natural deduction rules that it seeks to implement, however, it also allows the user to write their own Haskell to add functionality that otherwise JET would not be able to support.  
+We have given a brief on whether JET met our criteria for success, however, now we will discuss in detail each required feature in our list of aims given in \autoref{itms:aims}.
 
-One of the major short comings of JET is the representation of the context, both how it is defined and used throughout a given type system.
-As mentioned in ?? \todo{ref to typical}, I think the representation of the context in typical is one of the best, it gives the user the ability to customise the type system as they wish but also provides a notation that is intuitive and easy to use.
-We tried, as much as possible to make the definition of the type classes, used to define the contexts, as easy to use as possible and to help give the user an idea of what information may be required to build a specification in JET.
-However a nicer notation for defining namespaces would most likely make the tool easier to use than it is in its current form, currently you have to write a fair amount of Haskell in order to get the context to act as required.
-Where as the notation given in \textcite{grimm2007typical} is a much nicer way of representing namespaces.
-The inclusion of the predefined instance of the type class for \texttt{JetContextMap} does help provide a base for how the user will define their namespaces.
-The lack of language support for functions defined by the Haskell type class reduces the usability of the tool.
-This could be fixed by adding extra statements in the language.
-For example is we were to attempt to lookup an item in the context in STLC, instead of writing the premise using inline haskell as \texttt{\{t <- lookupContext var ctx\}}.
-We could instead have a piece of syntax in JET that encodes this meaning, for example we could have a grammar rule that has a keyword lookup and takes an item to lookup and a context to lookup withing, an example BNF grammar rule can be seen in \autoref{fig:LookupBNF}.
-Using this grammar rule the type premise would be rewritten as \texttt{var lookup context : t}.
-This would then be generated into the code that appeared in the initial type premise.
+The notation is simple, there are few more advanced features for type rules but in essence the type rules are similar to if statements in general purpose programming language and should therefore be feel familiar to programmers.
+The notation is not as easy to understand or use as it could be in its current state.
+In order to type check an imperative language that has a relatively complicated context type associated with it the user may have to write a large amount of inline Haskell to get the generated code to function as required.
+This can make the the given JET specification hard to read in places due to the use of this inline Haskell, an example of this is when trying to type check user defined types in Ad.
 
-\begin{figure}[]
-    \centering
-    \begin{grammar}
-        <TypePremise> ::= \dots \alt <Identifier> `lookup' <Identifier> `:' <Identifier>
-    \end{grammar}
-    \caption{}
-    \label{fig:LookupBNF}
-\end{figure}
+We have demonstrated that we can generate for simple imperative and functional programming languages, I would therefore state we have succeeded in type checking languages of varying paradigms.
+We have also succeeded in generating code for simple arithmetic expressions and simple statements as we can type check Ad which has both of these language constructs.
+Both of our example languages have variables, and we can type check both functions and procedures in Ad.
+Ad has complex types as part of its language and we can successfully type check those, the slight exception is that in order to type check record types correctly we do require a small amount of inline Haskell, however we can type check array types perfectly fine.
+STLC has higher order functions since it is a variation on the Simply Typed Lambda Calculus, therefore we can successfully type check function types and lambda expressions.
 
-I have mentioned that we can type check user defined types.
-This is true, however, it requires excessive use of user defined Haskell functions, and also takes advantages of how the language is structured and how we generate the output code.
-Using odd side affects of the language design to get the required behaviour is obviously leads to unintuitive and hard to read type rules.
-Therefore, an area of future work to be performed, for JET specifically, would be to design and implement a notation that provides a more intuitive method of performing type checking for user defined types along with record types etc.
-This would greatly improve the usability of the tool, making it easier to implement a type checker for a language with a type system involving user defined types.
-Possibly even making it quite simple to type check object oriented language which is class of language that we have not discussed but in the current state would require similar type rules to the ones in Ad for record types.
+I conclude that our notation (JET) has mostly been a success as we can type check two complete simple languages. 
+The notation is most places is fairly simple, its only in more complicated language constructs that the JET begins to lose its simplicity.
+Finally, we can type check all of our required language features and with some work we can type check user types, although not as succinctly as we would like.
+However, the further work we have mentions would resolve many of the issues that JET currently has, which would make the tool far more usable.
 
-The type inference algorithm that JET generates is very simple, and is simply used to retrieve the type of expressions within a given language.
-Therefore, JET has no built-in support for type reconstruction or unification\cite{pierce2002types,cardelli1996type}.
-This because there is no built-in way of specifying constraint typing relation\cite{pierce2002types}, this would require a notation in JET that allowed for the definition and use of type constraints.
-We then be required to generate some type unification algorithm such that we can find a valid substitution that satisfies the constraints given. 
-If we were able to add these features, then we would be able to start type checking languages of a similar class to standard ML\cite{milner1997definition}, which as of at the moment would either require vast amounts of inline Haskell or cannot be done at all with JET.
+\section{Further work}
 
-\section{Generated Code Structure}
-
+\subsection{Generated Code Structure}
 While we are able to generate correct code that meets our objectives, we are not generating particularly efficient code.
 Since JET is still a prototype tool we do not worry at this moment in time about the efficiency of the code generated.
 However, that is not to say that we should completely ignore the idea of generating more efficient code.
@@ -79,5 +62,46 @@ Inefficient ctx parameter position.
 
 Generate quick check code for type classes to make sure they are implementing the semantics correct.
 
-\section{Operational Semantics and Big Step Notation}
+\subsection{Language Structure and Extensions}
+Syntactically, the language is similar to natural deduction rules, which sets it apart from a tool such as typical\cite{grimm2007typical} which have is a programming language with some extra syntactic features to help with writing type checkers.
+This is main advantage of this tool that it is designed to represent the natural deduction rules that it seeks to implement, however, it also allows the user to write their own Haskell to add functionality that otherwise JET would not be able to support.  
+
+One of the major short comings of JET is the representation of the context, both how it is defined and used throughout a given type system.
+As mentioned in ?? \todo{ref to typical}, I think the representation of the context in typical is one of the best, it gives the user the ability to customise the type system as they wish but also provides a notation that is intuitive and easy to use.
+We tried, as much as possible to make the definition of the type classes, used to define the contexts, as easy to use as possible and to help give the user an idea of what information may be required to build a specification in JET.
+However a nicer notation for defining namespaces would most likely make the tool easier to use than it is in its current form, currently you have to write a fair amount of Haskell in order to get the context to act as required.
+Where as the notation given in \textcite{grimm2007typical} is a much nicer way of representing namespaces.
+The inclusion of the predefined instance of the type class for \texttt{JetContextMap} does help provide a base for how the user will define their namespaces.
+The lack of language support for functions defined by the Haskell type class reduces the usability of the tool.
+This could be fixed by adding extra statements in the language.
+For example is we were to attempt to lookup an item in the context in STLC, instead of writing the premise using inline haskell as \texttt{\{t <- lookupContext var ctx\}}.
+We could instead have a piece of syntax in JET that encodes this meaning, for example we could have a grammar rule that has a keyword lookup and takes an item to lookup and a context to lookup withing, an example BNF grammar rule can be seen in \autoref{fig:LookupBNF}.
+Using this grammar rule the type premise would be rewritten as \texttt{var lookup context : t}.
+This would then be generated into the code that appeared in the initial type premise.
+
+\begin{figure}[]
+    \centering
+    \begin{grammar}
+        <TypePremise> ::= \dots \alt <Identifier> `lookup' <Identifier> `:' <Identifier>
+    \end{grammar}
+    \caption{Possible grammar rule for an extension to JET type premise's}
+    \label{fig:LookupBNF}
+\end{figure}
+
+I have mentioned that we can type check user defined types.
+This is true, however, it requires excessive use of user defined Haskell functions, and also takes advantages of how the language is structured and how we generate the output code.
+Using odd side affects of the language design to get the required behaviour is obviously leads to unintuitive and hard to read type rules.
+Therefore, an area of future work to be performed, for JET specifically, would be to design and implement a notation that provides a more intuitive method of performing type checking for user defined types along with record types etc.
+This would greatly improve the usability of the tool, making it easier to implement a type checker for a language with a type system involving user defined types.
+Possibly even making it quite simple to type check object oriented language which is class of language that we have not discussed but in the current state would require similar type rules to the ones in Ad for record types.
+
+The type inference algorithm that JET generates is very simple, and is simply used to retrieve the type of expressions within a given language.
+Therefore, JET has no built-in support for type reconstruction or unification\cite{pierce2002types,cardelli1996type}.
+This because there is no built-in way of specifying constraint typing relation\cite{pierce2002types}, this would require a notation in JET that allowed for the definition and use of type constraints.
+We then be required to generate some type unification algorithm such that we can find a valid substitution that satisfies the constraints given. 
+If we were able to add these features, then we would be able to start type checking languages of a similar class to standard ML\cite{milner1997definition}, which as of at the moment would either require vast amounts of inline Haskell or cannot be done at all with JET.
+
+\subsection{Operational Semantics and Big Step Notation}
 Long term extensions are to add ability to specify operation semantics.
+
+\section{Conclusion}

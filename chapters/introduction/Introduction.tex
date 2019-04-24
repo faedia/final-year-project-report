@@ -1,4 +1,37 @@
 \chapter{Introduction}
-\todo{I will want to set the aims and objects of the project, along with the motivation}
-\pagebreak
-Test page
+\label{chap:intro}
+Programming languages have had type systems and type checkers dating back to Fortran\cite{Backus:1978:HFI:960118.808380}.
+Since then type systems have gone through many changes and an academic body of research has developed out of type systems to explore what information can be represented in type systems\cite{cardelli1996type}.
+Over the past few decades type systems, for modern programming languages, have grown in sophistication.
+The sophistication of these type systems have made the type checkers more complicated.
+As software becomes more complex, the likely hood for errors occurring becomes higher.
+If there is an error in a type checker then there is the possibility of code containing errors being passed through the compiler successfully, where as if the compiler were to behave correctly such an error could have been caught.
+
+This leads to the possibility of generating the code for the type checkers based upon the specification of the type systems to remove some of the complexity of developing the type checker.
+We therefore are going to be look at a notation that we can use to represent a specification of a type system.
+From this notation we should be able to generate code that implements the specification it is representing.
+Our notation should be simple to use and easy to understand, The simplicity of such a notation should reduce the number of errors that occur in these complicated pieces of software.
+It should also be able to generate code for a large variety of programming languages with many different language features.
+The following list is the list of required features that our notation should have or be able to represent:
+\begin{itemize}
+    \label{itms:aims}
+    \item Simple notation that represents the current method of representing type systems in academic literature but should also be easy to understand by people not familiar with the academia.
+    \item Generate code for many different languages, for example we should be able to generate code for imperative and function programming languages.
+    \item Generate code for simple arithmetic expressions and simple statement, i.e. an addition expression and loop statements.
+    \item We should be able to generate code for variables and subprograms (functions and procedures).
+    \item We should also be able to represent more complex data types, ranging from array types and record types, to functions types (i.e. lambda expressions).
+\end{itemize}
+
+These required features should allow for our notation to represent many kinds of type systems.
+They should also allow for the notation and corresponding generated code to be sophisticated enough to type check most simple languages and also allow for the possibility for extensions to add more supported kinds of languages in the future.
+This list of required features is how we will check for the success of the project and our notation, however there is another set of features that are desirable but not required features.
+For example, all things permitting we would like to be able to generate code for and represent user defined types types and type synonyms (i.e. typedef's in C\cite{kernighan2006c}).
+We would also like to be able to generate code for Hindley-Milner type inference\cite{MILNER1978348}, this would allow for the ability to type check languages similar to ML\cite{milner1997definition}. 
+However, this is not a required feature, it is a feature that would greatly expand the scope of what our desired notation would be capable or representing.
+
+In the next chapter (\autoref{chap:sota}) we will discuss the background of type systems and type checkers, we will also go on to discuss some previous type checker generators and discuss their advantages and disadvantages.
+In \autoref{chap:Method}, we will give our notation for representing type systems, along with the code that we generate from that notation.
+We will expand upon different features in our notation and also give examples of how the notation can and is intended to be used.
+Finally, in \autoref{chap:eval}, we will discuss whether or not our notation was able to successfully represent and generate code for all of our required features.
+We will also go onto to discuss any potential problems with our notation or with the code that we generate.
+The last thing we will discuss is any further work that can be done to extend the notation or the code generated, and also discuss the possible usefulness of such extensions.
