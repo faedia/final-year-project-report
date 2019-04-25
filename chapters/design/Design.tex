@@ -201,6 +201,7 @@ The difference is that we no longer require the \texttt{jetCheckType} parameter 
 Therefore, our function does not require the if-expression, instead we just wish to return the type \texttt{TInt}.
 
 \subsection{Typeless Type Rules}
+\label{sec:tltr}
 \begin{figure}[]
     \begin{prooftree}
         \LeftLabel{AdNullT: }
@@ -419,8 +420,8 @@ The difference being, one expects a statement, the other expects a list of state
 
 \subsection{List Notation Type Rules}
 We have discusses how list notation is used in premises, however, that is not useful unless code can be generated for type rules using list notation.
-Type rules for list notation bear a resemblance to normal type rules, however, they do vary in sum fundamental ways.
-They have the same style representing premises in an if-then block, however the consequent is expressed differently.
+Type rules for list notation bear a resemblance to normal type rules.
+They have different semantics for the consequent but the type premises have the same semantics we have previously discussed.
 Similarly to premises, instead of being encased in parentheses they are encased in square brackets.
 The major differences occur in the variables that are defined within the rule and what semantic meaning they have.
 The simplest form is to just define the Node type and nothing else, for example: \texttt{[Stmnt]}.
@@ -444,7 +445,7 @@ The variables in these type rules can be used the in the premises the same as an
 
 An example of how to define a type rule in list notation is when type checking a list of statements.
 The type rule in natural deduction logic can be seen in \autoref{fig:StmntListTypeRule}.
-As can be seen the premises in this type rule make a recursive type rule, and our the type rule in JET will have to reflect this meaning.
+The premises in this type rule make a recursive type rule, and our the type rule in JET will have to reflect this meaning.
 In the scenario given, the list statements must non-empty, we can create type rules that assert that the non-empty property must hold.
 
 \begin{lstlisting}[caption = Type rule in JET for a seqeunce of statements, label=lst:jetStmntList]
@@ -523,6 +524,43 @@ We use \texttt{var1} for the context to the second premise because \texttt{var1}
 This is required so that those declarations are visible to the statements in the block.
 
 \subsection{Lookup, Expand}
+\begin{figure}[]
+    \centering
+    \begin{subfigure}{1\textwidth}
+        \begin{prooftree}
+            \LeftLabel{VarT: }
+            \RightLabel{$[\tau = lookup(v, \Gamma)]$}
+            \AxiomC{}
+            \UnaryInfC{$\Gamma \vdash v : \tau$}
+        \end{prooftree}
+        \caption{Type rule for using a variable in the Simply Typed Lambda Calculus and Ad languages}
+        \label{fig:varTypeRule}
+    \end{subfigure}
+    ~
+    \begin{subfigure}{1\textwidth}
+        \begin{prooftree}
+            \LeftLabel{AdVarDecl: }
+            \AxiomC{$(head (\Gamma) \oplus {v : \tau}) ^\frown (tail (\Gamma)) \vdash \lfloor decl \rfloor$}
+            \RightLabel{$[v \notin dom((head(\Gamma)))]$}
+            \UnaryInfC{$\Gamma \vdash \lfloor v : \tau; decls \rfloor\ valid$}
+        \end{prooftree}
+        \caption{Type rule for variable declaration in the Ad language}
+        \label{fig:varDeclTypeRule}
+    \end{subfigure}
+    ~
+    \begin{subfigure}{1\textwidth}
+        \begin{prooftree}
+            \LeftLabel{AdVarDecl: }
+            \AxiomC{$expandContext(v,\tau,\Gamma) \vdash \lfloor decls \rfloor$}
+            \UnaryInfC{$\Gamma \vdash \lfloor v : \tau; decls \rfloor\ valid$}
+        \end{prooftree}
+        \caption{Type rule for variable declaration in the Ad language using functions from the Haskell type class}
+        \label{fig:modvarDeclTypeRule}
+    \end{subfigure}
+    \caption{}
+    \label{}
+\end{figure}
+
 The most common use of the context is when attempting to retrieve types of objects from the context.
 We will want to do two main actions with variables, the first is to retrieve the type of a variable from the context, the second is to add a new variable with a given type to the context.
 Retrieving the type of a variable from the context is given by the natural deduction rule in \autoref{fig:varTypeRule}.
@@ -534,156 +572,66 @@ When using this in a Haskell side condition we will want to bind the resulting t
 If we say that the return variable of the consequent is \texttt{t}, then we will want to write the side condition as \texttt{\{t <- lookupContext var ctx\}}, where \texttt{var} is the variable to lookup and \texttt{ctx} is the given context to perform the lookup in.
 We do not do anything special when generating the code from a Haskell side condition, we simply put it directly into the generated code in the position it occurs in the premise list (In this example it is the only premise so that does not matter just as long as it appears before the return monadic statement).
 
-\begin{figure}
-    \begin{prooftree}
-        \LeftLabel{VarT: }
-        \RightLabel{$[\tau = lookup(v, \Gamma)]$}
-        \AxiomC{}
-        \UnaryInfC{$\Gamma \vdash v : \tau$}
-    \end{prooftree}
-    \caption{Type rule for using a variable in the Simply Typed Lambda Calculus and Ad languages}
-    \label{fig:varTypeRule}
-\end{figure}
-
-
-
 We can now retrieve types from the context, however, that is not useful unless we can add objects to the context.
 We will be using the example that can be seen in \autoref{fig:varDeclTypeRule} taken from the Ad language.
-The premise has a very complicated expression to create the new context for the next decl to be given, however, this is functionality should be encoded into how the \texttt{expandContext} works.
-If we were to write the type rule using the functions we have available in the haskell type class we would write it as $expandContext(v,\tau,\Gamma) \vdash \lfloor decls \rfloor$ which is a much more succinct way of representing it.
+The type rule has a very complicated predicates for the new context and also for the side condition for the type rule.
+However, the functionality can be encoded into the \texttt{expandContext} function.
+The \texttt{expandContext}, takes as parameters the object, the type to associate with the object, and the context to add the object to.
+The function will return an error monad, therefore if the function is successful it will return the new context otherwise it will return an error.
+If we were to then use this function to write the natural deduction rule again we would get the rule given in \autoref{fig:modvarDeclTypeRule}.
 
-
-In order to add the variable to the context will want to use the function, given by the \texttt{JetContext} type class, \texttt{expandContext} which takes in something to identify the item (the variable), the type to be associated and the context to add the item to.
-This function may fail depending upon what semantics the user wants, for example a user may not want to be able to declare the same variable twice, and in other languages this may be allowed.
-The user is able to define this functionality when defining the instance of the type class.
-To use this function in the type rule we will write something similar to what was seen in the use of a variable but is slightly more complicated.
-We will want to write \texttt{\{expandContext var t ctx\}}, this will add (if it is possible) the variable \texttt{var} with type \texttt{t} to the context given by \texttt{ctx}.
-this gives us the whole type rule:
+The new version of the natural deduction rule is now much easier to write in JET because we can use the function from our type class.
+We write the type rule in JET as the following:
 \begin{lstlisting}[numbers=none]
-typerule VarDeclT <- (VarDecl var t) return \{expandContext var t ctx\}
+typerule VDeclT <- (VarDecl VDecl var t) return {expandContext var t ctx};
 \end{lstlisting}
-where the \texttt{expandContext} function call replaces the \texttt{()} that we have used in every other type rule seen so far.
-The premise has a very complicated expression to create the new context for the next decl to be given, however, this is functionality should be encoded into how the \texttt{expandContext} works.
-If we were to write the premise using the functions we have available in the haskell type class we would write it as $expandContext(v,\tau,\Gamma) \vdash \lfloor decls \rfloor$ which is a much more succinct way of representing it.
+There is no need for the premise in our JET type rules as we write that using the list notations, this type rule is simply to add the variable to the context therefore we need to return the new context which has been expanded with the variable rather than returning the Unit type that we have seen in every other type rule so far.
+The code we produce for this is similar to the typeless type rules seen in \autoref{sec:tltr} but with the expand function in place of \texttt{Succ ()}:
+\begin{lstlisting}
+checkVarDecl (VDecl var t) ctx = do
+    expandContext var t ctx
+\end{lstlisting}
 
-\begin{figure}
-    \begin{prooftree}
-        \LeftLabel{AdVarDecl: }
-        \AxiomC{$(head (\Gamma) \oplus {v : \tau}) ^\frown (tail (\Gamma)) \vdash \lfloor decl \rfloor$}
-        \RightLabel{$[v \notin dom((head(\Gamma)))]$}
-        \UnaryInfC{$\Gamma, v : \tau \vdash \lfloor v : \tau; decls \rfloor\ valid$}
-    \end{prooftree}
-    \caption{Type rule for variable declaration in the Ad language}
-    \label{fig:varDeclTypeRule}
-\end{figure}
+\subsection{Name-Spaces}
+Type checking functions in the Simply Typed Lambda Calculus is exactly the same as type checking variables as functions are first class citizens in the Simply Typed Lambda Calculus.
+However, this is not the same in the Ad language (or in many other similar imperative languages such as C or Ada).
 
-\begin{figure}
-    \begin{prooftree}
-        \LeftLabel{AdVarDecl: }
-        \AxiomC{$expandContext(v,\tau,\Gamma) \vdash \lfloor decls \rfloor$}
-        \UnaryInfC{$\Gamma, v : \tau \vdash \lfloor v : \tau; decls \rfloor\ valid$}
-    \end{prooftree}
-    \caption{Type rule for variable declaration in the Ad language using functions from the Haskell type class}
-    \label{fig:modvarDeclTypeRule}
-\end{figure}
+In order to type check procedures and functions we have used the concept of namespaces from \textcite{grimm2007typical}.
+Namespaces are a way of segregating identifiers based upon their declaration and use.
+For example, in our Ad language we have to ways to call a subprogram (function or procedure), one is an expression therefore it requires a return type, the other is a statement and therefore requires not to have a return type.
+From this we can identify in the expression call we need to check for a function, and in our statement call we need to check for a procedure.
+We can also check for the difference between a function call and the use of a variable.
+These will therefore all come under different "contexts" within our actual context, we will refer to these as namespaces to avoid the use of conflicting names.
+We can interact with different namespaces by defined our new type, which will be our context identifier type.
+In this type we will have multiple constructors, one for variables, one for functions, and one for procedures, this allows us to tell the difference between the variables procedures and functions within our JetContext instance and perform different actions accordingly.
 
-%So when we implement our new block function for our context we will prepend to the list a new empty map, this is to meet the requirement of the new block function that each new block should have no items in it.
-%Adding a new block is fairly simple with in the type rule, within the context definition of a type premise within a type rule you call the new block function on the context that you wish to add a new block in, for example:\\\texttt{{(newBlock ctx)} |- ($TypePremise$)}
-%this also produces very simple code.
-%Where we would usually have the variable \texttt{ctx} we now have the code \texttt{(newBlock ctx)} giving us the whole type premise of\\\texttt{$variable$ <- $TypePremiseFunc$ $TypePremiseParams$ (newBlock ctx)}
-%\subsection{Variables}
-%The most common use of the context is when attempting to type check the use of variables within a program.
-%We will want to do two main actions with variables, the first is to retrieve the type of a variable from the context, the second is to add a new variable with a given type to the context.
-%Retrieving the type of a variable from the context is given by the natural deduction rule in \autoref{fig:varTypeRule}.
-%The consequent is trivial and is the same as the ones we have seen throughout \autoref{sec:basisTypeRules}.
-%We still need to retrieve the arbitrary type $\tau$ from the context.
-%this can be done by using the function, given by the \texttt{JetContext} type class, \texttt{lookupContext}.
-%This function, given some a parameter to identify the item in the context (such as the variable name), will return the type associated with the input, or will return some fail message within the \texttt{JetError} monad.
-%When using this in a Haskell side condition we will want to bind the resulting type from the context to the variable that we are going to use as the type for the consequent.
-%If we say that the return variable of the consequent is \texttt{t}, then we will want to write the side condition as \texttt{\{t <- lookupContext var ctx\}}, where \texttt{var} is the variable to lookup and \texttt{ctx} is the given context to perform the lookup in.
-%We do not do anything special when generating the code from a Haskell side condition, we simply put it directly into the generated code in the position it occurs in the premise list (In this example it is the only premise so that does not matter just as long as it appears before the return monadic statement).
-%
-%\begin{figure}
-%    \begin{prooftree}
-%        \LeftLabel{VarT: }
-%        \RightLabel{$[v : \tau \in \Gamma]$}
-%        \AxiomC{}
-%        \UnaryInfC{$\Gamma \vdash v : \tau$}
-%    \end{prooftree}
-%    \caption{Type rule for using a variable in the Simply Typed Lambda Calculus and Ad languages}
-%    \label{fig:varTypeRule}
-%\end{figure}
-%
-%We can now retrieve types of variables from the context, however, that is not useful unless we can add variables to the context.
-%We will be using the example that can be seen in \autoref{fig:varDeclTypeRule} taken from the Ad language.
-%In this case we don't have any side conditions or premises, we only have the consequent which has the context $\Gamma$ but also has the variable and type added to the context.
-%We therefore need a way to represent this behaviour in the return part of our type rule so that we can give this new context to the rest of the type checker that requires it.
-%We do this by writing the required Haskell at the end of the type rule after the return keyword.
-%In order to add the variable to the context will want to use the function, given by the \texttt{JetContext} type class, \texttt{expandContext} which takes in something to identify the item (the variable), the type to be associated and the context to add the item to.
-%This function may fail depending upon what semantics the user wants, for example a user may not want to be able to declare the same variable twice, and in other languages this may be allowed.
-%The user is able to define this functionality when defining the instance of the type class.
-%To use this function in the type rule we will write something similar to what was seen in the use of a variable but is slightly more complicated.
-%We will want to write \texttt{\{expandContext var t ctx\}}, this will add (if it is possible) the variable \texttt{var} with type \texttt{t} to the context given by \texttt{ctx}.
-%this gives us the whole type rule:
-%\begin{lstlisting}[numbers=none]
-%typerule VarDeclT <- (VarDecl var t) return \{expandContext var t ctx\}
-%\end{lstlisting}
-%where the \texttt{expandContext} function call replaces the \texttt{()} that we have used in every other type rule seen so far.
-%
-%\begin{figure}
-%    \begin{prooftree}
-%        \LeftLabel{AdVarDecl: }
-%        \AxiomC{}
-%        \UnaryInfC{$\Gamma, v : \tau \vdash \lfloor v : \tau \rfloor\ valid$}
-%    \end{prooftree}
-%    \caption{Type rule for variable declaration in the Ad language}
-%    \label{fig:varDeclTypeRule}
-%\end{figure}
-%
-%\subsection{Procedures and Functions}
-%Type checking functions in the Simply Typed Lambda Calculus is exactly the same as type checking variables as functions are first class citizens in the Simply Typed Lambda Calculus.
-%However, this is not the same in the Ad language (or in many other similar imperative languages such as C or Ada).
-%
-%In order to type check procedures and functions we have used the concept of namespaces from \textcite{grimm2007typical}.
-%Namespaces are a way of segregating identifiers based upon their declaration and use.
-%For example, in our Ad language we have to ways to call a subprogram (function or procedure), one is an expression therefore it requires a return type, the other is a statement and therefore requires not to have a return type.
-%From this we can identify in the expression call we need to check for a function, and in our statement call we need to check for a procedure.
-%We can also check for the difference between a function call and the use of a variable.
-%These will therefore all come under different "contexts" within our actual context, we will refer to these as namespaces to avoid the use of conflicting names.
-%We can interact with different namespaces by defined our new type, which will be our context identifier type.
-%In this type we will have multiple constructors, one for variables, one for functions, and one for procedures, this allows us to tell the difference between the variables procedures and functions within our JetContext instance and perform different actions accordingly.
-%
-%Now we can discus how to type check functions and procedures.
-%They are very similar in structure and semantics, they both have a list of variable declaration to type check, they also both have a block structure as their body.
-%These consist of the premises.
-%We then want to add the whole subprogram declaration to the outer scope that it is contained in so that we can be used in the block it is declared in.
-%We will also want to add the subprogram declaration to the inner scope so that we can use the subprogram recursively.
-%So if we have a consequent \texttt{(ProcDecl PDecl ident vdecls decls stmnts)}, where ident is the name of the procedure, vdecls are the variable declaration for the parameters of the procedure, decls is the initial declaration block of the procedure, and stmnts is the statement block of the procedure.
-%We will want the type rule given in \autoref{lst:jetProcPremises}.
-%\begin{lstlisting}[caption = Jet premise list for procedures., label=lst:jetProcPremises]
-%If {let ts = map (\(VDecl _ t) -> t) vdecls},
-%    {ctx' <- expandContext (Proc ident ts) TNNone (updateRetType ctx TNNone)}
-%    {(newBlock ctx')} |- [VarDecl vdecls], 
-%    {var1} |- [Decl decls], 
-%    {var2} |- [Stmnt stmnts]
-%then (ProcDecl PDecl ident vdecls decls stmnt) return {return ctx'}
-%\end{lstlisting}
-%
-%\todo{May have to rewrite}
-%The first 2 premises are side conditions to define variables that can be used later on in the premise list or in the consequent.
-%The first simply gets the list of types from the list of variable declarations.
-%Next we add the procedure to the given context as this will be required in another type premise and in the consequent.
-%We then are able to type check the rest of the procedure declaration, the first thing we should do is type check the variable declaration to make sure that they are well formed before we can type check anything else, it is worth to note that here we add a new block to the context so as the parameters should belong to a new block.
-%We can then type check the list of normal declarations, with the new context returned by the variable declarations (this makes sure that we do not redeclare a parameter in the declaration list).
-%Finally we can check the body of the function, we give this the context given by the previous type premise, this is so it has visibility of all of the declarations and the parameters.
-%It will also have the procedure in the context so that we can recursively call the procedure.
-%We have already covered the consequent, the next thing to cover then is the return statement.
-%This is simply just to return the context that has the procedure declaration added to it.
-%We should not need to cover the generated code for this as we have discussed all the features that we have used to write this type rule previously, we are simply demonstrating how you would use those features to type check a procedure.
-%
-%Functions are more or less identical except we have the return type of the function that goes in place of the \texttt{TNNone} placeholder.
-%We will also want to set the current return type so that when we are type checking a return statement we can successfully check the type of the expression to return and the expected return type.
+Now we can discus how to type check functions and procedures.
+They are very similar in structure and semantics, they both have a list of variable declaration to type check, they also both have a block structure as their body.
+These consist of the premises.
+We then want to add the whole subprogram declaration to the outer scope that it is contained in so that we can be used in the block it is declared in.
+We will also want to add the subprogram declaration to the inner scope so that we can use the subprogram recursively.
+So if we have a consequent \texttt{(ProcDecl PDecl ident vdecls decls stmnts)}, where ident is the name of the procedure, vdecls are the variable declaration for the parameters of the procedure, decls is the initial declaration block of the procedure, and stmnts is the statement block of the procedure.
+We will want the type rule given in \autoref{lst:jetProcPremises}.
+\begin{lstlisting}[caption = Jet premise list for procedures., label=lst:jetProcPremises]
+If {let ts = map (\(VDecl _ t) -> t) vdecls},
+    {ctx' <- expandContext (Proc ident ts) TNNone (updateRetType ctx TNNone)}
+    {(newBlock ctx')} |- [VarDecl vdecls], 
+    {var1} |- [Decl decls], 
+    {var2} |- [Stmnt stmnts]
+then (ProcDecl PDecl ident vdecls decls stmnt) return {return ctx'}
+\end{lstlisting}
 
+\todo{May have to rewrite}
+The first 2 premises are side conditions to define variables that can be used later on in the premise list or in the consequent.
+The first simply gets the list of types from the list of variable declarations.
+Next we add the procedure to the given context as this will be required in another type premise and in the consequent.
+We then are able to type check the rest of the procedure declaration, the first thing we should do is type check the variable declaration to make sure that they are well formed before we can type check anything else, it is worth to note that here we add a new block to the context so as the parameters should belong to a new block.
+We can then type check the list of normal declarations, with the new context returned by the variable declarations (this makes sure that we do not redeclare a parameter in the declaration list).
+Finally we can check the body of the function, we give this the context given by the previous type premise, this is so it has visibility of all of the declarations and the parameters.
+It will also have the procedure in the context so that we can recursively call the procedure.
+We have already covered the consequent, the next thing to cover then is the return statement.
+This is simply just to return the context that has the procedure declaration added to it.
+We should not need to cover the generated code for this as we have discussed all the features that we have used to write this type rule previously, we are simply demonstrating how you would use those features to type check a procedure.
 %\input{chapters/design/Language.tex}
 %\input{chapters/design/SimpleTypeRules.tex}
 %\input{chapters/design/TypePremises.tex}
