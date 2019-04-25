@@ -476,6 +476,7 @@ There is an example provided to the user of how to do this using Haskell Data Ma
 The semantics of the each function will be explained using the provided example.
 
 \subsection{Empty Contexts and Blocks}
+\label{sec:blocks}
 \begin{lstlisting}[language=ada, caption=Example of declarations in a block structured language such as Ad, label=lst:blockDecl]
 declare
     x : int; -- This will succeed
@@ -587,53 +588,50 @@ typerule VDeclT <- (VarDecl VDecl var t) return {expandContext var t ctx};
 \end{lstlisting}
 There is no need for the premise in our JET type rules as we write that using the list notations, this type rule is simply to add the variable to the context therefore we need to return the new context which has been expanded with the variable rather than returning the Unit type that we have seen in every other type rule so far.
 The code we produce for this is similar to the typeless type rules seen in \autoref{sec:tltr} but with the expand function in place of \texttt{Succ ()}:
-\begin{lstlisting}
+\begin{lstlisting}[numbers=none]
 checkVarDecl (VDecl var t) ctx = do
     expandContext var t ctx
 \end{lstlisting}
 
-\subsection{Name-Spaces}
-Type checking functions in the Simply Typed Lambda Calculus is exactly the same as type checking variables as functions are first class citizens in the Simply Typed Lambda Calculus.
-However, this is not the same in the Ad language (or in many other similar imperative languages such as C or Ada).
+\subsection{Name-spaces}
+\begin{figure}[]
+    \centering
+    \begin{prooftree}
+        \AxiomC{$\Gamma \vdash params : \tau_{es}$}
+        \RightLabel{$[\tau = lookup((f, \tau_{params}),F)]$}
+        \UnaryInfC{$\Gamma \vdash f(params) : \tau$}
+    \end{prooftree}
+    \caption{Type rule for function call in Ad}
+    \label{fig:typeRuleFunc}
+\end{figure}
 
-In order to type check procedures and functions we have used the concept of namespaces from \textcite{grimm2007typical}.
-Namespaces are a way of segregating identifiers based upon their declaration and use.
-For example, in our Ad language we have to ways to call a subprogram (function or procedure), one is an expression therefore it requires a return type, the other is a statement and therefore requires not to have a return type.
-From this we can identify in the expression call we need to check for a function, and in our statement call we need to check for a procedure.
-We can also check for the difference between a function call and the use of a variable.
-These will therefore all come under different "contexts" within our actual context, we will refer to these as namespaces to avoid the use of conflicting names.
-We can interact with different namespaces by defined our new type, which will be our context identifier type.
-In this type we will have multiple constructors, one for variables, one for functions, and one for procedures, this allows us to tell the difference between the variables procedures and functions within our JetContext instance and perform different actions accordingly.
-
-Now we can discus how to type check functions and procedures.
-They are very similar in structure and semantics, they both have a list of variable declaration to type check, they also both have a block structure as their body.
-These consist of the premises.
-We then want to add the whole subprogram declaration to the outer scope that it is contained in so that we can be used in the block it is declared in.
-We will also want to add the subprogram declaration to the inner scope so that we can use the subprogram recursively.
-So if we have a consequent \texttt{(ProcDecl PDecl ident vdecls decls stmnts)}, where ident is the name of the procedure, vdecls are the variable declaration for the parameters of the procedure, decls is the initial declaration block of the procedure, and stmnts is the statement block of the procedure.
-We will want the type rule given in \autoref{lst:jetProcPremises}.
-\begin{lstlisting}[caption = Jet premise list for procedures., label=lst:jetProcPremises]
-If {let ts = map (\(VDecl _ t) -> t) vdecls},
-    {ctx' <- expandContext (Proc ident ts) TNNone (updateRetType ctx TNNone)}
-    {(newBlock ctx')} |- [VarDecl vdecls], 
-    {var1} |- [Decl decls], 
-    {var2} |- [Stmnt stmnts]
-then (ProcDecl PDecl ident vdecls decls stmnt) return {return ctx'}
+Name-spaces are not directly supported in the JET language, as they are in typical\cite{grimm2007typical}.
+They are a common construct in programming languages and a useful way of splitting the context into multiple parts.
+This means that in JET, we can have variable, a function, a procedure and type all have the same name but we can figure out which one we mean based upon when it is being used.
+For example, in the Ad language we will want to have multiple name-spaces, one for variables, one for functions and one for procedures and a final one for type definitions.
+Where as in the STLC we only have one name-space for variables.
+For our Ad language we need to construct our context in such a way that we can have all of the name-spaces we require.
+We do this using a 4-tuple where the items for variables, functions and procedures are the block structures we discussed in \autoref{sec:blocks}, where as our structure for type definitions is just a map because types can only be defined at the start of the program.
+The formal definition for the current context we require for Ad is $(V, P, F, T)$ where $V$ is the variables, $P$ is the procedures, $F$ is the functions and $T$ are the type definitions, however $\Gamma$ will still be used to denote the whole context.
+Therefore is we are trying to type check a function call we will get the natural deduction rule given in \autoref{fig:typeRuleFunc}.
+If we are using the context definition for Ad, in \autoref{appendix:witnessLanguages}, then we would be able to write this type rule in JET, using list notation to get the types of the parameters, as:
+\begin{lstlisting}
+typerule FCallT <- if {ctx} |- [Expr params] : tparams, 
+        {t <- lookupContext (Func ident tparams) ctx} then 
+    (Expr ECall ident params) : t return {Succ ()};
 \end{lstlisting}
-
-\todo{May have to rewrite}
-The first 2 premises are side conditions to define variables that can be used later on in the premise list or in the consequent.
-The first simply gets the list of types from the list of variable declarations.
-Next we add the procedure to the given context as this will be required in another type premise and in the consequent.
-We then are able to type check the rest of the procedure declaration, the first thing we should do is type check the variable declaration to make sure that they are well formed before we can type check anything else, it is worth to note that here we add a new block to the context so as the parameters should belong to a new block.
-We can then type check the list of normal declarations, with the new context returned by the variable declarations (this makes sure that we do not redeclare a parameter in the declaration list).
-Finally we can check the body of the function, we give this the context given by the previous type premise, this is so it has visibility of all of the declarations and the parameters.
-It will also have the procedure in the context so that we can recursively call the procedure.
-We have already covered the consequent, the next thing to cover then is the return statement.
-This is simply just to return the context that has the procedure declaration added to it.
-We should not need to cover the generated code for this as we have discussed all the features that we have used to write this type rule previously, we are simply demonstrating how you would use those features to type check a procedure.
-%\input{chapters/design/Language.tex}
-%\input{chapters/design/SimpleTypeRules.tex}
-%\input{chapters/design/TypePremises.tex}
-%\input{chapters/design/ListNotation.tex}
-%\input{chapters/design/Context.tex}
+The Haskell side condition used here is very similar to the one that was shown previously when descibing how the function \texttt{lookupContext} works and how it is meant to be used.
+This time however, the first parameter has a different form.
+In this case it has the form of the name-space which we want to look for the object in followed by the object that we wish to fine, in this example the object is the identifier of the function and the types of the parameters to the function.
+Therefore, \texttt{ident tparams} is analogous to $(f, \tau_{params})$ in the natural deduction rule, and we give the whole context to the function and we let the function decide what name-space to look in based upon the pattern of the first argument, i.e. what constructor is used for the first argument, in this case it is the \texttt{Func}, from the type:
+\begin{lstlisting}[numbers=none]
+data ContextKey = Ret | Proc Ident [Type] | Func Ident [Type] | Var Ident | Typ Ident
+    deriving (Eq, Ord, Show, Read)
+\end{lstlisting}
+This type is what is used as the "key" type for the \texttt{JetContext} instance for the custom type used for the context for the Ad language.
+The type here has one more item in the tuple that we didn't initially give in our formal definition of the Ad context and that is the constructor \texttt{Ret}.
+That item is used to denote the current return type of the current subprogram we are in.
+This means the new formal definition for the context for the Ad language is a 5-tuple given as $(\tau_{ret}, V, P, F, T)$ where the variables that existed previously mean the same and $\tau_{ret}$ denotes the current return type.
+This piece of information is required so that return statement can be correct type checked when it is used.
+For example, if the return statement is used in a procedure that should result in a type error as a procedure does not return a value and the way we know that we are in a procedure, in Ad, is the return type in will be $none$.
+This can be used by the \texttt{lookupContext} and \texttt{expandContext} functions just like the other constructors for that type, the only difference is the constructor does not require any parameters.
