@@ -4,6 +4,7 @@ Before we can generate type checking code we need to have a way of specifying th
 The way we will be specifying the the type system is through a domain specified language I have designed called \textit{JET Expresses Types} (JET).
 The way type rules are written in JET are analogous to the natural deduction rules to define the type system.
 This made the most sense as other parts of the compiler pipeline already have domain specific languages that are used to generate code.
+JET is written using BNFC\cite{Pellauer2004BNFCM} for the parser, and the code generator is written using Haskell\cite{marlow2010haskell} with the ghc compiler\cite{marlow2004glasgow}.
 
 In JET, rather than using the concrete syntax that is used in the natural deduction rules, we use the abstract syntax provided by the user to define the type rules.
 We are using the abstract syntax for a number of reasons; the first reason is that we are going to be type checking input that has already been parsed therefore we are going to be type checking the abstract syntax tree and not the input of the concrete syntax.
@@ -21,7 +22,7 @@ We will be generating Haskell code, since we can use the features in the Haskell
 \label{sec:exampleLanguages}
 When discussing the features in JET, we will be discussing them in relation to two example languages.
 These languages fulfil our aims for what language features we want JET to be able to type check given in \autoref{itms:aims}.
-They also exhibit wildly different language features and paradigms so that we can demonstrate the diversity of languages that JET can type check.
+They also exhibit different language features and paradigms so that we can demonstrate the diversity of languages that JET can type check.
 
 The first of these languages is a language I have called Ad.
 The language is a small imperative block structured language similar to Ada.
@@ -197,7 +198,7 @@ In this case we wish to return the type TInt, in this case we produce the follow
 inferLiteral (LitInt n) ctx = do Succ TInt
 \end{lstlisting}
 The function signature for our infer function is similar to the signature for our check function.
-The difference is that we no longer require the \texttt{jetCheckType} parameter as we are no longer checking the type associate with our type rule matches some expected type, instead we are returning the type associated with our type rule.\todo{This sentence needs a rewrite}
+The difference is that we no longer require the \texttt{jetCheckType} parameter as we are no longer checking the type associate with our type rule matches some expected type, instead we are returning the type associated with our type rule.
 Therefore, our function does not require the if-expression, instead we just wish to return the type \texttt{TInt}.
 
 \subsection{Typeless Type Rules}
@@ -472,7 +473,7 @@ We have discussed in \autoref{sec:scond} how side conditions work in JET and how
 To make interacting with the context through Haskell side conditions easier and more consistent, there is a Haskell type class that has been provided to the user to give them a common interface to interact with the context\footnote{The definition of this type class (called \texttt{JetContext}) is provided in ref to haskell modules!!!!!!!!}.
 It is important to note that these modules do not define the context for the user, the user will have to define their own context type and instantiate the Haskell type class for their own context type.
 This is because many different languages can have contexts that work differently and letting the user define their own context gives them greater control on the semantics of the context.
-There is an example provided to the user of how to do this using Haskell Data Maps\todo{cite data maps} so that the user is not on their own in this regard, the name of the type for this example is \texttt{JetContextMap}.
+There is an example provided to the user of how to do this using Haskell Data Maps\cite{haskelldatamap} so that the user is not on their own in this regard, the name of the type for this example is \texttt{JetContextMap}.
 The semantics of the each function will be explained using the provided example.
 
 \subsection{Empty Contexts and Blocks}
@@ -597,7 +598,7 @@ checkVarDecl (VDecl var t) ctx = do
 \begin{figure}[]
     \centering
     \begin{prooftree}
-        \AxiomC{$\Gamma \vdash params : \tau_{es}$}
+        \AxiomC{$\Gamma \vdash params : \tau_{params}$}
         \RightLabel{$[\tau = lookup((f, \tau_{params}),F)]$}
         \UnaryInfC{$\Gamma \vdash f(params) : \tau$}
     \end{prooftree}
@@ -633,5 +634,11 @@ The type here has one more item in the tuple that we didn't initially give in ou
 That item is used to denote the current return type of the current subprogram we are in.
 This means the new formal definition for the context for the Ad language is a 5-tuple given as $(\tau_{ret}, V, P, F, T)$ where the variables that existed previously mean the same and $\tau_{ret}$ denotes the current return type.
 This piece of information is required so that return statement can be correct type checked when it is used.
-For example, if the return statement is used in a procedure that should result in a type error as a procedure does not return a value and the way we know that we are in a procedure, in Ad, is the return type in will be $none$.
-This can be used by the \texttt{lookupContext} and \texttt{expandContext} functions just like the other constructors for that type, the only difference is the constructor does not require any parameters.
+This can be used by the \texttt{lookupContext} and \texttt{expandContext} functions just like the other constructors for that type, the only difference is the constructor does not require any parameters which means we can write the type rule for the return statement to be:
+\begin{lstlisting}
+typerule ReturnT <- if {ctx} |- (Expr e) : t, 
+        {tret <- lookupContext Ret ctx}, 
+        {if t == tret then Succ () else Fail "Type error"} 
+    then (Stmnt SReturn e) return {Succ ()} 
+\end{lstlisting}
+As can be seen, the type for the expression to return is inferred and then there is an if-expression to assert that the type of the expression is the same as the current return type.

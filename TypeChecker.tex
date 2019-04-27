@@ -17,10 +17,11 @@
 \supervisor{Jeremy L. Jacob}
 \BEng
 
-\dedication{To some people I suppose}
+\dedication{For my mum}
 
 \acknowledgements{
-  Something about stuff
+  I give thanks to my supervisor Jeremy Jacob for his continued help during the process of writing this project.
+  I would also like to give thanks to my friends and family who have supported (and coped) throughout the project.
 }
 
 \lstset{
@@ -45,8 +46,48 @@
   %\lstlistoflistings
 
   \begin{summary}
-    Summary Talk
-  \end{summary}
+    Type systems are used to reduce the number of incorrect programs that a compiler will accept and generate code for.
+    They are often the first line in defence against stopping bugs from being introduced into programs.
+    For many years type systems have had a formal notation to specify them.
+    There are a small number of tools that will generate code for type checkers, some of which have designed their notation such that it is akin to the formal notation.
+    However, the feature sets that these tools support vary by a large amount, and many of these tools are can be complicated and not beginner friendly.
+    We are therefore going to devising a notation that can describe type systems in a machine readable format.
+    The notation should also be intuitive such that compiler writers not familiar with the formal notation type systems will still be able to understand the type systems written in our notation.
+  
+    The notation should be able to support simple languages from different programming paradigms, such as imperative and function paradigms.
+    We should be able to support arithmetic and Boolean expressions, such as addition, equality, etc.
+    There should be the facility to support the use and declaration of variables and subprograms.
+    We should be able to support more complicated types than just integer and Boolean, such as array types and record types.
+    However, given the time scale for the project we are not expected to be able to type check object orientated languages, such as Java,  and other languages of similar complexity, such as Haskell so only the language features discussed are required and any extra languages features are to be implemented if time permits.
+    
+    The notation we have devised is similar to the formal notation of type systems but its syntax is devised in such a way that it used programming constructs that developers should be familiar with, such as an if-then statement to assert properties within the type system and a return statement that can be used to return information.
+    The notation differs from the notation used in other tools in a number of ways.
+    Many other notations force the user to use a particular set of tools to perform lexical analysis and syntax analysis.
+    The notation we have devised, and subsequent tool, do not have this issue because we use the abstract syntax definition of the language to both represent the type system in our notation and to perform the type checking in the generated code.
+    The provides the user with the ability to use any parser and lexer they wish.
+    The one stipulation we have, is the parser and lexer must be written in Haskell, or a tool that generates Haskell, this is because the target language (the output language of the generated code) of the code we generate is Haskell.
+    We generate Haskell code so that we make use of some of the high level language features in Haskell which makes traversing abstract syntax trees trivial.
+    The algorithms that we generate are based off of the algorithms discussed in \textcite{ranta2012implementing}.
+    Our notation allows the use to write their own Haskell code so that they interact with the context.
+    Interacting with the context is important because the context stores all the information about variables and subprograms, it may also contain user defined type information.
+    We let the user define their own context so that we do not limit what kinds of languages we support.
+    However, to help the user to define their context we have provided a Haskell type class with function signatures for common actions that would be performed on the context.
+    The functions in these type classes are functions to make an empty context, add a new block to the context, lookup an item and retrieve its type from the context, and add a new item to the context with a given type.
+
+    Our notation and tool is able to represent and generate code for two example languages that we have used as test cases to prove that we can type check all of the features that we have specified we should be able to type check.
+    These two languages are very different, one is a simple imperative language, the other is a simple functional programming language.
+    This demonstrates that the kinds of languages that our tool can represent and generate code for is diverse.
+    However, our notation is far from perfect, it cannot type check every type of language, in particular it is unable to type check languages similar to ML and Haskell that have polymorphic type systems.
+    The code we generate is also not as efficient as it could be, especially in an error case.
+    There are also an number extensions we could make for the representation of the context and its given functions, especially in the use of its given functions.
+
+    \subsubsection{Statement of Ethics}
+    There are very few ethical considerations to make.
+    We have not used any people or animals as part of the testing process for the tool.
+    There have been no experiments performed during the development of the tool or in any of its subsequent testing.
+    Any software that was used during the development of the tool or used as part of the discussing during this report has been credited to the relevant people, we have not claimed any of the software as our own.
+
+    \end{summary}
 \input{chapters/introduction/Introduction.tex}
 \input{chapters/stateOfTheArt/StateOfTheArt.tex}
 \input{chapters/design/Design.tex}

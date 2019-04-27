@@ -1,5 +1,6 @@
 
 \appendix
+\appendixpage
 \chapter{JET Language}
 \label{appendix:jetLanguage}
 \section{Grammar}
@@ -42,8 +43,6 @@
 \chapter{Witness Languages}
 \label{appendix:witnessLanguages}
 \section{Ad Language}
-The Ad language is a test case language to express the features that the tool can generate code for.
-It is a simple imperative language.
 \subsection{AST}
 \begin{lstlisting}[language=Haskell]
 newtype Ident = Ident String
@@ -86,6 +85,8 @@ data TypeName = TNBool | TNInt | TNNone
 \end{lstlisting}
 
 \subsection{Type Rules}
+The definition of $\Gamma$ for the Ad language is a 5-tuple of the form $(\tau_{ret}, P, F, V, T)$, where $\tau_{ret}$ is the return type of the current subprogram, $P$ is the name-space of procedures, $F$ is the name-space for functions, $V$ is the name space for variables, $T$ is the name-space for types.
+The name-spaces $P$, $F$, $V$ are block structured whereas $T$ is not, therefore $newblock(\Gamma)$ is really $(\tau_{ret}, newblock(P),newblock(F), newblock(V), T)$
 \subsubsection{Statements}
 \begin{figure}[H]
     \begin{center}
@@ -183,27 +184,35 @@ data TypeName = TNBool | TNInt | TNNone
 \end{figure}
 
 \section{Simply Typed Lambda Calculus}
+$\Gamma$ in the Simply Typed Lambda Calculus is simply just a single name-space containing variables.
 \subsection{AST}
 \begin{lstlisting}[language=Haskell]
 data Id = Id String
 
 data Literal 
-    = LitInt Int
-    | LitBool bool
+    = LitInt Integer
+    | LitBool Bool
 
 data Expr 
     = Var Id
     | Lit Literal
     | App Expr Expr
     | Lam Id Type Expr
+    | If Expr Expr Expr
+    | Fix Expr
+    | Pred Expr
+    | ESucc Expr
+    | Iszero Expr
 
 data Type
     = TInt
     | TBool
     | TFun Type Type
+
 \end{lstlisting}
 
 \subsection{Type Rules}
+
 \begin{figure}[H]
     \begin{center}
         \LeftLabel{STLCBool: }
@@ -217,15 +226,15 @@ data Type
         \AxiomC{}
         \UnaryInfC{$\Gamma \vdash n : Int$}
         \DisplayProof{}
-        \ 
+        \ \\\ \\
         \LeftLabel{STLCVar: }
-        \RightLabel{$[n : \tau \in \Gamma]$}
+        \RightLabel{$[\tau = lookup(x, \Gamma)]]$}
         \AxiomC{}
         \UnaryInfC{$\Gamma \vdash n : \tau$}
         \DisplayProof{}
         \ \\\ \\
         \LeftLabel{STLCLam: }
-        \AxiomC{$\Gamma, x:\sigma \vdash e : \tau$}
+        \AxiomC{$expandContext(x, \sigma, newblock(\Gamma)) \vdash e : \tau$}
         \UnaryInfC{$\Gamma \vdash (\lambda x : \sigma\ .\ e) : (\sigma \rightarrow \tau)$}
         \DisplayProof{}
 
@@ -271,14 +280,8 @@ data Type
 \end{figure}
 
 \subsection{JET Specification}
-\begin{lstlisting}[escapechar=\$, language=Haskell]
+\begin{lstlisting}[language=Haskell]
 {
-{-# Language FlexibleContexts #-}
-module TypeCheck where
-
-import Debug.Trace
-import JetContext
-import JetErrorM
 import Lang.Ast
 
 type Context = JetContextMap Id Type
@@ -286,53 +289,75 @@ makeCheckError _ _ _ = "Type Error"
 makeInferError _ _ = "Type Error"
 }
 
-typerule TLitBool <- (Literal LitBool b) : TBool 
-    return {return ()};
-typerule TLitInt <- (Literal LitInt n) : TInt 
-    return {return ()};
-typerule TLitUnit <- (Literal LitUnit) : TUnit 
-    return {return ()};
+typerule TLitBool <- (Literal LitBool b) : TBool return {return ()};
+typerule TLitInt <- (Literal LitInt n) : TInt return {return ()};
 
-typerule TExprVar <- 
-    if {t <- lookupContext var ctx} then 
-    (Expr Var loc var) : t return {return ()};
-typerule TExprLit <- 
-    if {ctx} |- (Literal k) : t then 
-    (Expr Lit pos k) : t return {return ()} ;
-typerule TExprIf <- 
-    if {ctx} |- (Expr ep) : TBool, {ctx} |- (Expr et) : t, 
-        {ctx} |- (Expr ef) : t then 
-    (Expr If ep et ef) : t return {return ()};
-typerule TExprApp <- 
-    if {ctx} |- (Expr e1) : TFun t1 t2, 
-        {ctx} |- (Expr e2) : t1 then 
-    (Expr App e1 e2) : t2 return {return ()};
-typerule TExprLam <- 
-    if {=<< expandContext var t1 (newBlock ctx)} 
-        |- (Expr e) : t2 then 
-    (Expr Lam var t1 e) : TFun t1 t2 return {return ()};
-typerule TExprLet <- 
-    if {ctx} |- (Expr e1) : t1, 
-        {=<< expandContext var t1 (newBlock ctx)} 
-            |- (Expr e2) : t2 then 
-    (Expr Let var e1 e2) : t2 return {return ()};
-typerule TExprFix <- 
-    if {ctx} |- (Expr e) : TFun t1 t2, 
-        {if t1 == t2 then return () else fail "Type error"} then 
-    (Expr Fix e) : t1 return {return ()};
-typerule TExprPred <- 
-    if {ctx} |- (Expr e) : TInt then 
-    (Expr Pred e) : TInt return {return ()};
-typerule TExprSucc <- 
-    if {ctx} |- (Expr e) : TInt then 
-    (Expr ESucc e) : TInt return {return ()};
-typerule TExprIszero <- 
-    if {ctx} |- (Expr e) : TInt then 
-        (Expr Iszero e) : TBool return {return ()};
+typerule TExprVar <- if {t <- lookupContext var ctx} then (Expr Var var) : t return {return ()};
+typerule TExprLit <- if {ctx} |- (Literal k) : t then (Expr Lit k) : t return {return ()} ;
+typerule TExprIf <- if {ctx} |- (Expr ep) : TBool, {ctx} |- (Expr et) : t, {ctx} |- (Expr ef) : t then (Expr If ep et ef) : t return {return ()};
+typerule TExprApp <- if {ctx} |- (Expr e1) : TFun t1 t2, {ctx} |- (Expr e2) : t1 then (Expr App e1 e2) : t2 return {return ()};
+typerule TExprLam <- if {=<< expandContext var t1 (newBlock ctx)} |- (Expr e) : t2 then (Expr Lam var t1 e) : TFun t1 t2 return {return ()};
+typerule TExprFix <- if {ctx} |- (Expr e) : TFun t1 t2, {if t1 == t2 then return () else fail "Type error"} then (Expr Fix e) : t1 return {return ()};
+typerule TExprPred <- if {ctx} |- (Expr e) : TInt then (Expr Pred e) : TInt return {return ()};
+typerule TExprSucc <- if {ctx} |- (Expr e) : TInt then (Expr ESucc e) : TInt return {return ()};
+typerule TExprIszero <- if {ctx} |- (Expr e) : TInt then (Expr Iszero e) : TBool return {return ()};
 \end{lstlisting}
 
 \chapter{Haskell Modules}
 \section{Jet Context Base}
+\begin{lstlisting}[language=Haskell]
+class JetContextBase t where
+    emptyContext :: t
+    newBlock :: t -> t
+\end{lstlisting}
 \section{Jet Context Relational}
+\begin{lstlisting}[language=Haskell]
+class JetContextBase r => JetContext r k t where
+    lookupContext :: Ord k => k -> r -> JetError t
+    expandContext :: Ord k => k -> t -> r -> JetError r
+    expandContextIf :: Ord k => (k -> r -> Bool) -> k -> t -> r -> JetError r
+\end{lstlisting}
 \subsection{Jet Context Map}
+\begin{lstlisting}[language=Haskell]
+instance JetContextBase (JetContextMap a b) where
+    emptyContext = JetContextMap [M.empty]
+    newBlock (JetContextMap blocks) = JetContextMap (M.empty : blocks)
+
+instance JetContext (JetContextMap a b) a b where
+    lookupContext key (JetContextMap blocks) = maybe2Error "Lookup error" $ M.lookup key (M.unions blocks)
+    expandContext key t (JetContextMap (block:blocks)) = do
+        block' <- insertUnique key t block
+        return (JetContextMap (block':blocks))
+    expandContextIf predicate key t ctx = 
+        if predicate key ctx then expandContext key t ctx
+        else fail "Predicate check failed"
+\end{lstlisting}
 \section{Jet Error Monad}
+\begin{lstlisting}[language=Haskell]
+module JetErrorM where
+
+import Control.Monad
+import Control.Monad.Fail
+
+data JetError a = Succ a | Fail String deriving (Show, Read, Eq, Ord)
+
+instance Functor JetError where
+    fmap = liftM
+
+instance Applicative JetError where
+    pure = Succ
+    (<*>) = ap
+
+instance Monad JetError where
+    return = pure
+    fail = Fail
+    Succ a >>= f = f a
+    Fail s >>= _ = Fail s
+
+instance MonadFail JetError where
+    fail = Fail
+
+maybe2Error :: String -> Maybe a -> JetError a
+maybe2Error s Nothing = Fail s
+maybe2Error _ (Just a) = Succ a
+\end{lstlisting}

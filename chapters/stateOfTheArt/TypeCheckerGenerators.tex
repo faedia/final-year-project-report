@@ -8,32 +8,46 @@ Attribute Grammars are a way of specifying the semantics of grammar rules for a 
 This makes them seem a likely candidate to look at when attempting to generate type checking code since type checking is a form of semantic analysis on some input code.
 In Knuth's paper\cite{Knuth1968}, he gives an example of the attributes required to evaluate a simple language to emulate a Turing Machine.
 Even though he discusses the evaluation of a turing machine it is plain to see that on each node of the tree an attribute could be given to it that defines the type of the node.
-However we have already discussed a notation that represents this, namely the natural deduction logic to define inference rules, and that notation is widely used in the rest of the literature to formally specify type systems.
-While Attribute Grammars can represent the type system of a language, the notations for attribute grammars can vary widely where as the notation of natural deduction logic is fairly standard throughout the literature and widely accepted when formally defining type systems. 
 
-\subsubsection{Eli}
+\subsection{Eli}
+\begin{figure}[]
+    \centering
+    \begin{prooftree}
+        \AxiomC{$\Gamma \vdash e_1 : \tau$}
+        \AxiomC{$\Gamma \vdash e_2 : \tau$}
+        \RightLabel{$[\tau \in \{Bool, Int\}]$}
+        \BinaryInfC{$\Gamma \vdash e_1 = e_2 : Bool$}
+    \end{prooftree}
+    \caption{Type rule for equality for the example language for Eli}
+    \label{fig:oilNatRule}
+\end{figure}
 Eli is a tool which, given a set of specifications, will generate code for a whole compiler based upon those specifications\cite{Gray:1992:ECF:129630.129637}.
 The way Eli generates all the code is by the use of an attribute grammar system and numerous internal tools that generate code for each different part of the compiler pipeline.
+The internal tools use DSL's which define a specification for part of the language.
+One of these DSL's is called \textit{Operator Identification Language} (OIL), which is used to define the typing relations on operators.
+The definition of these type rules is fairly simple, however in their example there are a lot of repeated definitions for operators, for example there are multiple definitions to define the equality operator, one for each of the required types that the operator can act on.
+Where as in the natural deduction rules this would only have to be defined once where the type is some arbitrary type $\tau$  with some constraint on $\tau$ such that it can only be from a set of types that an equality check can be performed on, see the natural deduction rule given in \autoref{fig:oilNatRule}.
+The tools lacks built-in support for constructs in the language that can have arbitrary types.
+However, OIL is a small and simple language that is easy to understand, but, the other constituent parts of ELI required to build a tool are not as simple and the specifications written in them can get much more complicated for larger projects.
 
-Can generate a whole compiler.
+\subsection{Ruler}
+Ruler is a DSL that bears close resembles to natural deduction rules that formally define type systems\cite{dijkstra2006ruler}.
+The notation used to describe the natural deduction rules is intuitive to anyone who has experience with such notation.
+However, other possible compiler writers may have never come across the notation meaning the syntax of Ruler could be un-intuitive to such compiler writers.
+The rules can be compiled to either \LaTeX, or to an attribute grammar system in Haskell.
+However this means that rules have to be written multiple times for each target that the user may want to output to.
+This creates unnecessary duplication of types rules when so that they can be compiled to executable code or to a formal specification given in latex.
+Since the only executable code compiles to an attribute grammar, it forces the user to use the attribute grammar for the whole frontend of their compiler, where as using the abstract syntax allows the user to choose any parser generator (or write their own parser) as long they provide the abstract syntax to the tool.
+They also make a claim that they support Hindley-Milner type inference, while this to some extent is true, it requires the user to write a rather large amount of Haskell code in order for the tool to generate correct code for Hindley-Milner type inference.
+This means that a large part of the type checker still has to be written by hand because many non-trivial type rules will require access to the context or types to be unified for which code is not generated for.
 
-Fully formed tool.
-
-We do not need to generate a whole compiler just the type checker so should be able to focus a bit more.
-
-Syntax required a lot of auxiliary code.
-
-Can be hard to read and understand.
-
-Does not match inference rules.
-
-Limitations on the languages has to be parsed.
-
-We care more about the AST
-
-\subsection{Domain Specific Languages}
-\subsubsection{Ruler}
-\subsubsection{Typical}
-Is effectively a specialised functional programming language
-
-Representation of scopes and namespaces is very nice
+\subsection{Typical}
+\label{sec:typical}
+The final tool we will be discussing is Typical\cite{grimm2007typical}.
+Typical is a language that uses ML\cite{milner1997definition} as the base of its language this means that all terms in Typical are typed and such as a proof of concept of Typical, the type checker for Typical is built using Typical.
+Typical also has some extra declarations that are not in ML, these are the ability to define name-spaces for the context, and scoping rules, which in the tools we have discusses so far the users have had to write such features of their type system.
+They also have in built functions that retrieve types from the context and also add new items to a context, which is again features that the previous tools did not have.
+Unlike our previous examples that use attribute grammars to perform their type checking, Typical uses the abstract syntax tree given by the parser.
+This means that Typical can be used with any parser generator that targets Typical's target language (Java), although they do admit that some modification may be required.
+They have performed the required modification on the Rats! parser generator\cite{Grimm:2006:BET:1133255.1133987}.
+To understand a type system written in Typical you will need to be familiar with ML or another language similar to is such as Haskell since the vast majority of the code in Typical is ML.

@@ -14,13 +14,11 @@ The type system features that could be added to these languages are, in brief, f
 While these features are not a requirement, they were mentioned as possible end goals that a full tool (JET is currently still a prototype) would need to support.
 They would almost certainly be required for a complete tool to support a large variety of complex language, i.e. languages such as Ada or Haskell.
 
-We have given a brief on whether JET met our criteria for success, however, now we will discuss in detail each required feature in our list of aims given in \autoref{itms:aims}.
-
+We have discussed briefly whether JET met our criteria for success, however, now we will discuss in detail each required feature in our list of aims given in \autoref{itms:aims}.
 The notation is simple, there are few more advanced features for type rules but in essence the type rules are similar to if statements in general purpose programming language and should therefore be feel familiar to programmers.
 The notation is not as easy to understand or use as it could be in its current state.
 In order to type check an imperative language that has a relatively complicated context type associated with it the user may have to write a large amount of inline Haskell to get the generated code to function as required.
 This can make the the given JET specification hard to read in places due to the use of this inline Haskell, an example of this is when trying to type check user defined types in Ad.
-
 We have demonstrated that we can generate for simple imperative and functional programming languages, I would therefore state we have succeeded in type checking languages of varying paradigms.
 We have also succeeded in generating code for simple arithmetic expressions and simple statements as we can type check Ad which has both of these language constructs.
 Both of our example languages have variables, and we can type check both functions and procedures in Ad.
@@ -32,7 +30,13 @@ The notation is most places is fairly simple, its only in more complicated langu
 Finally, we can type check all of our required language features and with some work we can type check user types, although not as succinctly as we would like.
 However, the further work we have mentions would resolve many of the issues that JET currently has, which would make the tool far more usable.
 
+We have very few ethical considerations to make.
+We have not used any people or animals as part of the testing process for the tool.
+There have been no experiments performed during the development of the tool or in any of its subsequent testing.
+Any software that was used during the development of the tool or used as part of the discussing during this report has been credited to the relevant people such as the use of BNFC and Haskell, we have not claimed any of the software as our own.
+
 \section{Further work}
+\label{sec:furtherwork}
 
 \subsection{Generated Code Structure}
 While we are able to generate correct code that meets our objectives, we are not generating particularly efficient code.
@@ -58,16 +62,12 @@ checkExpr (If e1 e2 e3) t ctx = do
 \end{lstlisting}
 In this case we will fail as soon as possible if \texttt{e2} does not have the correct type where as before we would not fail until after everything else had been evaluated.
 
-Inefficient ctx parameter position.
-
-Generate quick check code for type classes to make sure they are implementing the semantics correct.
-
 \subsection{Language Structure and Extensions}
 Syntactically, the language is similar to natural deduction rules, which sets it apart from a tool such as typical\cite{grimm2007typical} which have is a programming language with some extra syntactic features to help with writing type checkers.
 This is main advantage of this tool that it is designed to represent the natural deduction rules that it seeks to implement, however, it also allows the user to write their own Haskell to add functionality that otherwise JET would not be able to support.  
 
 One of the major short comings of JET is the representation of the context, both how it is defined and used throughout a given type system.
-As mentioned in ?? \todo{ref to typical}, I think the representation of the context in typical is one of the best, it gives the user the ability to customise the type system as they wish but also provides a notation that is intuitive and easy to use.
+As mentioned in \autoref{sec:typical}, I think the representation of the context in typical is one of the best, it gives the user the ability to customise the type system as they wish but also provides a notation that is intuitive and easy to use.
 We tried, as much as possible to make the definition of the type classes, used to define the contexts, as easy to use as possible and to help give the user an idea of what information may be required to build a specification in JET.
 However a nicer notation for defining namespaces would most likely make the tool easier to use than it is in its current form, currently you have to write a fair amount of Haskell in order to get the context to act as required.
 Where as the notation given in \textcite{grimm2007typical} is a much nicer way of representing namespaces.
@@ -102,6 +102,18 @@ We then be required to generate some type unification algorithm such that we can
 If we were able to add these features, then we would be able to start type checking languages of a similar class to standard ML\cite{milner1997definition}, which as of at the moment would either require vast amounts of inline Haskell or cannot be done at all with JET.
 
 \subsection{Operational Semantics and Big Step Notation}
-Long term extensions are to add ability to specify operation semantics.
+The notation for the semantics of the evaluation, and code generation, of languages is very similar to the notation for type systems.
+They use the same natural deduction rules, instead of expressing types, it expression evaluation or the resulting code.
+\textcite{pierce2002types} uses natural deduction rules to describe the evaluation of his Simply Typed Lambda Calculus.
+It is foreseeable then, since we have shown we can generate type checking code, that one could generate code for rules that express the operational semantics of a language.
 
 \section{Conclusion}
+It has been shown that it is possible to, at least partially, generate code for type checkers.
+It has also been show that code can be generated for languages of different programming paradigms, such as imperative and functional programming languages.
+For simpler languages, generating type checking code is some what trivial, however as the languages gain complexity generating code becomes more difficult due to the corner cases of the languages semantics.
+This is especially prevalent in languages that have complicated structures for their context.
+We briefly began to touch on this issue in Ad, however not as much as we would if we attempted to type check languages such as Ada or C++.
+This is most likely due to the nature of such languages, their type systems have grown in complexity and do not have form definition for their semantics and as such are open to interpretation.
+Therefore, more work will be required, to both extend JET with new features to support more complicated type systems (the ones discussed in \autoref{sec:furtherwork} are but a few), and also then produce and test type checkers for more complicated languages using JET with possible extensions added to JET to make this possible.
+It may also be that some type systems will be able to be generated completely due to the "ad-hoc" nature of compilers and because many languages lack formal specifications for their type systems (along with other parts of the compiler).
+There is also the possibility of generating code for evaluation and code generation for languages which could make process of producing whole compilers and interprets much easier and quicker.

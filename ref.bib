@@ -107,20 +107,15 @@
   year={2007}
 }
 
-@InProceedings{ruler,
-author="Dijkstra, Atze
-and Swierstra, S. Doaitse",
-editor="Hagiya, Masami
-and Wadler, Philip",
-title="Ruler: Programming Type Rules",
-booktitle="Functional and Logic Programming",
-year="2006",
-publisher="Springer Berlin Heidelberg",
-address="Berlin, Heidelberg",
-pages="30--46",
-abstract="Some type systems are first described formally, to be sometimes followed by an implementation. Other type systems are first implemented as language extensions, to be sometimes retrofitted with a formal description. In neither case it is an easy task to keep both artefacts consistent. In this paper we introduce Ruler, a domain specific language for describing type rules. Type rules can be incrementally described, thus providing a means for building complex type systems on top of simpler ones. Besides checking well-formedness of Ruler programs we use them to generate (1) a visual LATEX rendering, suitable for use in the presentation of formal aspects, and (2) an attribute grammar based implementation. Combining these two aspects in Ruler contributes to bridging the gap between theory and practice: mutually consistent representations can be generated for use in both theoretical and practical settings.",
-isbn="978-3-540-33439-2"
+@inproceedings{dijkstra2006ruler,
+  title={Ruler: Programming type rules},
+  author={Dijkstra, Atze and Swierstra, S Doaitse},
+  booktitle={International Symposium on Functional and Logic Programming},
+  pages={30--46},
+  year={2006},
+  organization={Springer}
 }
+
 
 @article{Backus:1978:HFI:960118.808380,
  author = {Backus, John},
@@ -348,4 +343,45 @@ doi = "https://doi.org/10.1016/0022-0000(78)90014-4",
 url = "http://www.sciencedirect.com/science/article/pii/0022000078900144",
 author = "Robin Milner",
 abstract = "The aim of this work is largely a practical one. A widely employed style of programming, particularly in structure-processing languages which impose no discipline of types, entails defining procedures which work well on objects of a wide variety. We present a formal type discipline for such polymorphic procedures in the context of a simple programming language, and a compile time type-checking algorithm W which enforces the discipline. A Semantic Soundness Theorem (based on a formal semantics for the language) states that well-type programs cannot “go wrong” and a Syntactic Soundness Theorem states that if W accepts a program then it is well typed. We also discuss extending these results to richer languages; a type-checking algorithm based on W is in fact already implemented and working, for the metalanguage ML in the Edinburgh LCF system."
+}
+
+@software{haskelldatamap,
+  title = {Haskell Containers: Data.{M}ap},
+  author = {Daan Leijen and Andriy Palamarchuk},
+  url = {https://hackage.haskell.org/package/containers-0.6.0.1/docs/Data-Map.html},
+  date = {2019-04-26},
+  version = {0.6.0.1}
+}
+
+@article{Grimm:2006:BET:1133255.1133987,
+ author = {Grimm, Robert},
+ title = {Better Extensibility Through Modular Syntax},
+ journal = {SIGPLAN Not.},
+ issue_date = {June 2006},
+ volume = {41},
+ number = {6},
+ month = jun,
+ year = {2006},
+ issn = {0362-1340},
+ pages = {38--51},
+ numpages = {14},
+ url = {http://doi.acm.org/10.1145/1133255.1133987},
+ doi = {10.1145/1133255.1133987},
+ acmid = {1133987},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {extensible syntax, module system, packrat parsing, parser generator, parsing expression grammar},
+},
+
+@inproceedings{Pellauer2004BNFCM,
+  title={BNF Converter Multilingual Front-End Generation from Labelled BNF Grammars},
+  author={Michael Pellauer and Markus Forsberg and Aarne Ranta},
+  year={2004}
+}
+
+@article{marlow2010haskell,
+  title={Haskell 2010 language report},
+  author={Marlow, Simon and others},
+  journal={Available online http://www. haskell. org/(May 2011)},
+  year={2010}
 }
