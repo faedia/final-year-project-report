@@ -1,86 +1,88 @@
 \chapter{Design of the Notation}
 \label{chap:Method}
-Before we can generate type checking code we need to have a way of specifying the type system such that a program can read the given specification and generate the required code.
-The way we will be specifying the the type system is through a domain specified language I have designed called \textit{JET Expresses Types} (JET).
+Before type checking code can be generated, a notation needs to be devised for representing a type system such that a program can read the given specification and generate the required code.
+The way the type system will be specified is through a domain specified language has been designed called \textit{JET Expresses Types} (JET).
 The way type rules are written in JET are analogous to the natural deduction rules to define the type system.
-This made the most sense as other parts of the compiler pipeline already have domain specific languages that are used to generate code.
+This this logical because other parts of the compiler pipeline already have domain specific languages that are used to generate code.
 JET is written using BNFC\cite{Pellauer2004BNFCM} for the parser, and the code generator is written using Haskell\cite{marlow2010haskell} with the ghc compiler\cite{marlow2004glasgow}.
 
-In JET, rather than using the concrete syntax that is used in the natural deduction rules, we use the abstract syntax provided by the user to define the type rules.
-We are using the abstract syntax for a number of reasons; the first reason is that we are going to be type checking input that has already been parsed therefore we are going to be type checking the abstract syntax tree and not the input of the concrete syntax.
-The second reason, it is possible to type check an intermediate representation of a language.
+In JET, rather than using the concrete syntax that is used in the natural deduction rules, the abstract syntax is provided by the user to define the type rules.
+The abstract syntax is used for a number of reasons.
+the first reason is that we are going to be type checking input that has already been parsed, therefore we are going to be type checking the abstract syntax tree and not the input of the concrete syntax.
+The second reason is that it is possible to type check an intermediate representation of a language.
 Intermediate representations may only be represented through abstract syntax and have no concrete syntax, for example, Haskell's intermediate representation (known as core) is type checked during Haskell's compilation process\cite{marlow2004glasgow}.
 Type rules in JET have a similar form to the natural deduction rules, such that there is a rule name followed by some judgments and then the consequent.
 This provides a common way of representing type rules even if the way of writing the rules in JET uses an ASCII representation of the natural deduction rules.
 
-The code we are generating is based off of the type checking and type inference algorithm described in \textcite{ranta2012implementing}.
-This is because the algorithms described are simple, yet powerful enough to express common type rules, such as arithmetic expressions and also allow for the use of functions and variables.
-It also makes the code generation quite simple as there is a direct translation of type rules to a function in the algorithm.
+The code being generated is based off of the type checking and type inference algorithm described in \textcite{ranta2012implementing}.
+This is because the algorithms described are simple yet powerful enough to express common type rules, such as arithmetic expressions and also allow for the use of functions and variables.
+In addition it makes the code generation quite simple as there is a direct translation of type rules to a function in the algorithm.
 We will be generating Haskell code, since we can use the features in the Haskell language such as pattern matching and the use of monads to help produce relatively simple code from a given type specification.
 
 \subsection{Example Languages}
 \label{sec:exampleLanguages}
-When discussing the features in JET, we will be discussing them in relation to two example languages.
-These languages fulfil our aims for what language features we want JET to be able to type check given in \autoref{itms:aims}.
-They also exhibit different language features and paradigms so that we can demonstrate the diversity of languages that JET can type check.
+When discussing the features of JET, they will be discussed in relation to two example languages.
+These languages fulfil the aims for what language features JET should be able to type check (given in \autoref{itms:aims}).
+The languages also exhibit different features features and paradigms so that we can demonstrate the diversity of languages that JET can type check.
 
-The first of these languages is a language I have called Ad.
+The first of these languages is called Ad.
 The language is a small imperative block structured language similar to Ada.
 An Ad program is a series of type definitions followed by a procedure.
 Procedures have a list of variable declarations as parameters.
 Procedures consist of a list of declarations followed by a list of statements.
 Declarations can introduce new variables or subprograms (collective term for a function or procedure).
 A variable declaration consists of an identifier annotated with the type of the new variable, i.e. \texttt{x : Int}.
-A function differs from a procedure in one way, a function returns a value whereas a procedure does not.
+A function differs from a procedure in that, a function returns a value whereas a procedure does not.
 There are a number of built-in statements in the language, consisting of control flow statements; a statement to introduce a new block; an assignment statement; a procedure call statement and a print statement. 
 The language also has a small number of built-in expressions: literal, arithmetic, Boolean, variable, and function call expressions.
 Ad has two primitive types: integer and Boolean.
-We are also able to express more complex types such as record and array types.
-We can define type synonyms in Ad, type synonyms are similar to typedef's in C such that we can give a more complex type a name to reduce repeated type definitions in variable declarations.
+It is also able to express more complex types such as record and array types.
+It can define type synonyms in Ad, type synonyms are similar to typedef's in C such that it is possible to give a more complex type a name to reduce repeated type definitions in variable declarations.
 
-Our second language is an implementation of the \textit{Simply Typed Lambda Calculus} (STLC).
+The second language is an implementation of the \textit{Simply Typed Lambda Calculus} (STLC).
 STLC is a simple functional programming language.
 A program in STLC consists of a single expression.
-In the language we have access to simple arithmetic expressions; we then have more complicated expressions such as an if-expression and fix-expressions (this allows for recursive functions), we also have lambda abstraction (this creates an anonymous function that takes an expression as a parameter and has a single expression as a body), and function application that applies a given function with a given parameter.
-The type system, while having the same primitive types as Ad, is quite different to the type system in Ad.
-The major difference is that we have a function type which is a type that takes an input to an output, often represented as $\tau \rightarrow \sigma$ where $\tau$ is the type of the parameter and $\sigma$ is the type returned by the function.
-This also means that the type system in STLC treats functions as "first-class citizens" as we can give functions as parameters to other functions and return new functions from a given function.
-STLC is based off of the lambda calculus that is given in \textcite{pierce2002types}, they go into much more detail and have more extensions to STLC than we are going to consider here.
+In the language there is access to simple arithmetic expressions; and more complicated expressions such as an if-expression and fix-expressions (this allows for recursive functions), lambda abstraction (this creates an anonymous function that takes an expression as a parameter and has a single expression as a body), and function application that applies a given function with a given parameter.
+The type system, while having the same primitive types as Ad, is quite different to that in Ad.
+The major difference is that it has a function type which is a type that takes an input to an output, often represented as $\tau \rightarrow \sigma$ where $\tau$ is the type of the parameter and $\sigma$ is the type returned by the function.
+This also means that the type system in STLC treats functions as "first-class citizens" as one can give functions as parameters to other functions and return new functions from a given function.
+STLC is based off of the lambda calculus that is given in \textcite{pierce2002types}, they go into much more detail and have more extensions to STLC than will be considered here.
 
-Full definitions of the abstract syntax and formal type systems for both of our example languages can be seen in \autoref{appendix:witnessLanguages}.
+Full definitions of the abstract syntax and formal type systems for both of the example languages can be seen in \autoref{appendix:witnessLanguages}.
 JET specifications for both of these languages are also provided.
 
 \section{Overview of the JET Language}
-The JET language has two main structural components: some Haskell code in an initial section\footnote{This is similar Flex and Bison's C code blocks to provide data structures and functions for the scanner and parser}, followed by a list of type rules.
+The JET language has two main structural components: some Haskell code in an initial section\footnote{This is similar Flex and Bison's C code blocks to provide data structures and functions for the scanner and parser.}, followed by a list of type rules.
 The initial Haskell block is to allow the user to define functions and types that are to be used in the following type rules.
 
-In order to write a type system in JET, the user will also have to provide a type which is an instance of a Haskell type class that defines a number of functions that will be useful when interacting with the context, such as looking up a variable in the context and adding an item to the context.
-This type class has been written in such a way to support as many contexts as possible and not limit what kinds of languages JET can support.
-Along with the type class, there is also be an example of how to implement an instance of the type class using a Haskell map as an example.
+In order to write a type system in JET, the user will also have to provide a context type, which is an instance of a Haskell type class that defines a number of functions that will be useful when interacting with the context, such as looking up a variable in the context and adding an item to the context.
+This type class has been written in such a way to support as many kinds of contexts as possible and not limit what kinds of languages JET can support.
+Along with the type class, there is also an example of how to implement an instance of the type class using a Haskell Data Map\cite{haskelldatamap} which the user may use or modify.
 
 \subsection{Initial Inline Haskell}
 The block of initial Haskell code, during code generation, will be placed just under the module definition but before the code for the type rules.
-The inline Haskell code blocks take the form of $\{Code\}$, we chose a similar syntactic structure to code blocks in Flex and Bison (and their variants) so that the format will feel familiar to compiler writers.
-As previously mentioned this is where a user can define functions and types required for the generated type checking code.
-For example this is where a user can define the type for the context along with defining the instance of the type class \texttt{JetContext} for the users custom context type.
-It also allows for the ability to import any other Haskell modules, this means that the user can import their Abstract Syntax Definition for that language that may be defined in a separate Haskell module.
-An complete example for a block structured imperative language, similar to Add but with less features, can be seen in \autoref{lst:inlineHaskellCode}.
-Here we define the context to be a 3-tuple which contains return type of the current subprogram, along with two namespaces, one for functions; and one for variables.
+The inline Haskell code blocks take the form of $\{Code\}$.
+It has a similar syntactic structure to code blocks in Flex and Bison (and their variants) so that the format will feel familiar to compiler writers.
+As previously mentioned, this is where a user can define functions and types required for the generated type checking code.
+For example this is where a user can define the type for the context along with defining the instance of the type classdefine , \texttt{JetContext}, for the users custom context type.
+It also allows for the ability to import any other Haskell modules, meaning that the user can import their Abstract Syntax Definition for that language that may be defined in a separate Haskell module.
+A complete example for a block structured imperative language, similar to Ad but with less features, can be seen in \autoref{lst:inlineHaskellCode}.
+Here the context is defined to be a 3-tuple which contains return type of the current subprogram, along with two name-spaces, one for functions; and one for variables.
 Namespaces, and their uses are discussed in detail \autoref{sec:context}.
-These namespaces utilise the JetContextMap provided to the user.
-JetContextMap is a list of Maps, where each Map is a scope in the code.
-The instance of JetContext for JetContextMap is already defined for the user an example of how to define an instance of JetContext.
+These namespaces utilise the \texttt{JetContextMap} provided to the user.
+\texttt{JetContextMap} is a list of Maps, where each Map is a scope in the code.
+The instance of the type class \texttt{JetContext} for \texttt{JetContextMap} is already provided to the user.
 
 Having this inline code allows the user to specify exactly how they wish the context to function.
 It also allows for a set of standard functions that the user can use to interact with the context, along with adding their own custom functions if and when they need them.
 
 \subsection{Type Rule Format Overview}
 \label{sec:typeRuleOverview}
-The format of the type rules is extremely similar to the way we represent type rules in the natural deduction logic.
+The format of the type rules is extremely similar to the way type rules are represented in the natural deduction logic.
 This allows for simple translation of a natural deduction type rule into one of the type rules written in JET.
-We will delve into more detail about the format of the type rules, but the basic structure of the type rules is as follows
+We will delve into more detail about the format of the type rules, but the basic structure of the type rules is as follows:
 
-\begin{figure}[]
+\begin{figure}[h]
     \begin{grammar}
         <Rule> ::= `typerule' <Identifier> `<-' [ `if' <TypePremiseList> `then' ] <TypeConsequent> `return' <InlineHaskell>
     \end{grammar}
@@ -90,18 +92,19 @@ We will delve into more detail about the format of the type rules, but the basic
 
 
 The type premise list encased within the if-then is the list of judgments to prove the consequent.
-It is possible for a type rule to require no judgments to prove the consequent so the if-then is optional, therefore, the type premise list can be forced to be nonempty.
+It is possible for a type rule to require no judgments to prove the consequent so the if-then is optional, therefore the type premise list can be forced to be nonempty.
 The type premise after the if-then is the consequent we are trying to prove.
-We then have a return keyword followed by some inline Haskell.
+It then has a return keyword followed by some inline Haskell.
 This is to allow the user to return any data that is required for type checking future AST Nodes.
 For example, in our block structured language Ad, blocks are list of declarations followed by a list of statements.
-When checking the declarations we will be adding new variables and subprograms to the context and when we finish checking the declarations we will want to return the context so that those variables and subprograms can be used in the statements.
+When checking the declarations it will be adding new variables and subprograms to the context.
+When it finishes checking the declarations it will return the context so that those variables and subprograms can be used in the statements.
 If the context was not returned then those declared variables and subprograms would not be found in the context when they should have been.
-The grammar of JET is designed to replicate as much as possible from the natural deduction rules as they are an already accepted way of formally representing type rules.
+The grammar of JET is designed to replicate, as much as possible, from the natural deduction rules because they are already an accepted way of formally representing type rules.
 The formal grammar can be seen in its entirety in \autoref{appendix:jetLanguage}.
 
 \section{Type Rules}
-Type rules are how we express the type system for which we wish to generate the type checking code for.
+Type rules are How the type system, for which the user wishes to generate the type checking code, is expressed
 Therefore, the structure and semantics of type rules will determine what language features JET can express and successfully generate valid code for the type checker.
 We are going to be using the example languages seen in \autoref{sec:exampleLanguages} as motivation for the existence of features and their use.
 
@@ -144,62 +147,66 @@ We are going to be using the example languages seen in \autoref{sec:exampleLangu
     \label{fig:simpleTypeRulesExample}
 \end{figure}
 
-The type consequent is the most important part of the type rule, this is because the type consequent tells us exactly what part of the abstract syntax is being type checked along with the type associated with that piece of abstract syntax.
+The type consequent is the most important part of the type rule because it tells us exactly what part of the abstract syntax is being type checked along with the type associated with that piece of abstract syntax.
 For example the type consequent for the type rule given in \autoref{fig:iszeroTypeRule} for STLC is:
 \begin{lstlisting}[numbers=none]
 (Expr Iszero e) : TBool
 \end{lstlisting}
-The consequent given represents exactly the same thing as the consequent in the natural deduction rule it simply just uses the abstract syntax that we have specified in \autoref{appendix:witnessLanguages}.
-It is also worth to note that we associate the type consequent by writing a colon and the Haskell constructor or variable of the type we wish to associate with the consequent.
-In this case it is the Haskell that identifies the Boolean type which is \texttt{TBool}.
-
-Using the natural deduction rule in \autoref{fig:intTypeRule} we can create an example of our JET type rules and code that we generate from such an example.
+The given consequent represents exactly the same thing as the consequent in the natural deduction rule, it uses the abstract syntax that is have specified in \autoref{appendix:witnessLanguages}.
+it is worth to note that to associate a type with the consequent the consequent must be followed by a colon and the Haskell type constructor or variable of the type to associate with the consequent.
+In this case it is the type constructor Haskell that identifies the Boolean type which is \texttt{TBool}.
+To demonstrate how to write a type rule in JET, and the resulting generated code, the natural deduction rule given in \autoref{fig:intTypeRule} will be used as an example.
 The type rule is very simple, having no premises or side conditions, meaning that the type rule in our language should be just as simple:
 \begin{lstlisting}[numbers=none]
 typerule STLCInt <- (Literal LitInt n) : TInt 
     return {Succ ()};
 \end{lstlisting}
 There are three constituent parts to this type rule.
-The first (\texttt{typerule STLCInt}) has no semantic meaning and is instead just an identifier for the type rule to be used for documentation purposes of the type system.
-The second is the consequent of the type rule, taking a form similar to the previously discussed example, using the abstract syntax to pattern match on the literal expression for integer.
+The first (\texttt{typerule STLCInt}) has no semantic meaning and is instead just an identifier for the type rule, to be used for documentation purposes of the type system.
+The second is the consequent of the type rule (taking a form similar to the previously discussed example) using the abstract syntax to pattern match on the literal expression for integer.
 It is also annotated with the representation, in the abstract syntax, for integer in STLC.
 The final part is the return statement.
-This where any extra data, if necessary, is returned so that is can be used in the rest of the type checking, since this is just checking a literal integer there is no extra information that is useful from this type rule so we just return an empty tuple.
-The type checking function we generate has to assert than the expected type is the same as the type associated with out type rule.
-There are a number of way to do this in Haskell, the way in which we do it is within an if-expression in Haskell:
+This is where any extra data is returned if necessary so that is can be used in the rest of the type checking.
+Since this is just checking a literal integer there is no extra information that is useful from this type rule so it just returns an empty tuple.
+The type checking function JET generates has to assert than the expected type is the same as the type associated with out type rule.
+There are a number of way to do this in Haskell, the way in which JET does this is within an if-expression in Haskell:
 \begin{lstlisting}
 checkLiteral (LitInt n) jetCheckType ctx = do
     if jetCheckType == TInt then Succ () 
     else Fail (makeCheckError (LitInt n) jetCheckType TInt)
 \end{lstlisting}
-The first thing you may notice is the name of the function, its suffix is the same as the first identifier in the consequent.
-This is because the first identifier in the consequent must always be the type name of AST type we are type checking, in this case we are checking a \texttt{Literal}, in other cases we could be checking an \texttt{Expr} in which case we would replace that first identifier in the consequent.
-This allows us to pattern match against any constructor of a given AST node. For example if we needed to type check against an arbitrary expression in our Ad language, that expression could be a literal expression or an addition expression or any other expression within the language.
-If we were to have unique function for each possible kind of expressions, i.e. \texttt{checkEAdd}, then we could not match against any arbitrary expression, we would need to know the kind of expression before we can call a function.
-However, if each expression is within the same function, then we can use Haskell's pattern matching features to identify what kind of expression it is and then execute the relevant type checking code for that kind of expression.
-From this we can generalise the type consequent so that it has the format of \texttt{HaskellType HaskellTypeConstructor}.
+The suffix of the name of the function is the same as the first identifier in the consequent.
+This is because the first identifier in the consequent must always be the type name of AST type that is being type checked.
+In this case it is checking a \texttt{Literal}, in other cases it could be checking an \texttt{Expr} in which case the first identifier in the consequent would be replaced.
+This allows JET to pattern match against any constructor of a given AST node. 
+For example, if an arbitrary expression in our Ad language needed checking that expression could be a literal expression or an addition expression or any other expression within the language.
+If JET were to generate a unique function for each possible kind of expressions, i.e. \texttt{checkEAdd}, then it could not match against any arbitrary expression, the type checker would need to know the kind of expression before it can call a function.
+However, if each expression is within the same function, then JET can use Haskell's pattern matching features to identify what kind of expression it is and then execute the relevant type checking code for that kind of expression.
+From this the type consequent can be generalised so that it has the format of \texttt{HaskellType HaskellTypeConstructor}.
 
-The first parameter (\texttt{LitInt n}) of the function is the Haskell type constructor specified in the consequent, this allows for the required pattern matching so that we can call the correct type checking code.
-The second parameter (\texttt{jetCheckType}) is the expected type to be associated with this type rule, this is the parameter that we will perform the equality check with when asserting whether or not the actual and the expected type match.
-Finally, the last parameter it the current context which we are type checking in.
-In this case the type rule does not interact with the context, however, more complicated type rules may interact with the context so it is required to be a parameter to every type checking function so that is never lost when performing the type checking.
+The first parameter (\texttt{LitInt n}) of the function is the Haskell type constructor specified in the consequent.
+This allows for the required pattern matching so that the type checker can call the correct type checking code.
+The second parameter (\texttt{jetCheckType}) is the expected type to be associated with this type rule.
+This is the parameter that the equality check will be performed on when asserting whether or not the actual and the expected type match.
+Finally, the last parameter is the current context which thr type checker is checking against.
+In this case the type rule does not interact with the context, however, more complicated type rules may do so, hence it is required to be a parameter to every type checking function so that is never lost when performing the type checking.
 
-Since this type rule has no premises the body of the function only has to check that the expected and actual type match.
-If they do then we succeed and return whatever the inline Haskell was in the return statement of the type rule.
-If not then we fail and generate some error message from a user defined error function.
+Since this type rule has no premises, the body of the function only has to check that the expected and actual type match.
+If they do then it succeeds and returns whatever the inline Haskell was in the return statement of the type rule.
+If not then it fails and generates some error message from a user defined error function.
 
-We have discussed how to generate a type check function, however that is not the only function that is required. 
+How the type check function is generated has been discussed, however that is not the only function that is required. 
 The infer function is used to return the type associated with a type rule so that the type can be used in other areas of the type checking.
-For example, in the type rule show in \autoref{fig:eqTypeRule} we have two type premises both with type $\tau$, in this case $\tau$ is an arbitrary type but both instances of $\tau$ are the same.
-Therefore we need a function that we can call so we can the type of piece of syntax, more commonly this is known as type inference\cite{cardelli1996type}.
-Going back to our previous example (to see examples of type rules with premises go to \autoref{sec:premiseTypeRules}), we wish to generate code that will return the type associated with our type rule.
-In this case we wish to return the type TInt, in this case we produce the following code:
+For example, in the type rule show in \autoref{fig:eqTypeRule} it has two type premises both with type $\tau$, in this case $\tau$ is an arbitrary type but both instances of $\tau$ are the same.
+Therefore, a function is required so that the type associated with a piece of syntax can be retrieved (more commonly this is known as type inference\cite{cardelli1996type}).
+Going back to the previous example (to see examples of type rules with premises go to \autoref{sec:premiseTypeRules}), code needs to be generated that will return the type associated with our type rule.
+In this case TInt needs to be returned, in this case the following code is produced:
 \begin{lstlisting}[numbers=none]
 inferLiteral (LitInt n) ctx = do Succ TInt
 \end{lstlisting}
-The function signature for our infer function is similar to the signature for our check function.
-The difference is that we no longer require the \texttt{jetCheckType} parameter as we are no longer checking the type associate with our type rule matches some expected type, instead we are returning the type associated with our type rule.
-Therefore, our function does not require the if-expression, instead we just wish to return the type \texttt{TInt}.
+The function signature for the infer function is similar to the signature for the check function.
+The difference is that it no longer require the \texttt{jetCheckType} parameter as it is no longer checking the type associate with the type rule matches some expected type, instead it returns the type associated with our type rule.
+Therefore, the function does not require the if-expression, instead it just needs to return the type \texttt{TInt}.
 
 \subsection{Typeless Type Rules}
 \label{sec:tltr}
@@ -213,30 +220,33 @@ Therefore, our function does not require the if-expression, instead we just wish
     \label{fig:nullStmntTR}
 \end{figure}
 
-Some languages require that every type rule must have a type associated with it, STLC is an example of such a language; however, this is not the case for all languages.
-For example, in our Ad language only expressions have types associated with them, every other syntactic part of the language is simply referred to as $valid$ if all of the premises of the type rule are true.
-The simplest of these type rules is the null statement in the Ad language seen in \autoref{fig:nullStmntTR}, this is a simple type rule where if it is successfully parsed it will always be true as it has no premises.
+Some languages require that every type rule must have a type associated with it, STLC is an example of such a language.
+However, this is not the case for all languages.
+For example, in the Ad language, only expressions have types associated with them, every other syntactic part of the language is simply referred to as $valid$ if all of the premises of the type rule are true.
+The simplest of these type rules is the null statement in the Ad language.
+Seen in \autoref{fig:nullStmntTR}, this is a simple type rule where if it is successfully parsed it will always be true as it has no premises.
 This type rule given in JET is represented as:
 \begin{lstlisting}[numbers=none]
 typerule AdNullT <- (Stmnt SNull) return {Succ ()}
 \end{lstlisting}
 
-Here, unlike in previous type rules we have seen in \autoref{sec:basisTypeRules}, we have not specified the type associated with the type rules at all, it has been completely omitted.
+Here, unlike in previous type rules tht have been discussed in \autoref{sec:basisTypeRules}, no type is associated with the type rules at all.
 This represents the concept of marking something as $valid$ in the natural deduction rules.
-The code we generate is also substantially different (and much simpler) as we no longer need to check the type as there is no type, we also no longer need to generate an infer function to return a type as again there is no type to return:
+The code that is generated also substantially different (and much simpler) as it no longer needs to check the type as there is no type.
+It also no longer needs to generate an infer function to return a type as again there is no type to return:
 \begin{lstlisting}[language=Haskell, numbers=none]
 checkStmnt SNull ctx = do Succ ()
 \end{lstlisting}
 You may also notice that the parameter \texttt{jetCheckType} has also been omitted as there is no need for it since there is no type to check.
 
-We could get the same functionality without this feature by having an internal type that represents $valid$.
-In the Ad language we could \texttt{TNNone} for this purpose giving us the type rule:
+The same functionality could be aschieved without this feature by having an internal type that represents $valid$.
+In the Ad language \texttt{TNNone} could be used for this purpose giving us the type rule:
 \begin{lstlisting}[escapechar=\#, numbers=none]
 typerule AdNullT <- (Stmnt SNull) #\textbf{: TNNone} return {Succ ()}
 \end{lstlisting}
-However, this is redundant as we are generating more code than necessary because we now have a type to check, where as before we did not.
-This could potentially lead to a loss in performance since we are now having to perform an equality check and also have to give the \texttt{jetCheckType} parameter to the check function.
-We will also generate an infer function since there is now the possibility to infer the type of such a statement where as in our original type rule we did not.
+However, this is redundant because it generates more code than necessary as it now has a type to check, whereas before it did not.
+This could potentially lead to a loss in performance since it is now having to perform an equality check and also has to give the \texttt{jetCheckType} parameter to the check function.
+Additionally it will generate an infer function since there is now the possibility to infer the type of such a statement whereas in our original type rule it did not have this potential before.
 
 \subsection{Type Premises}
 \label{sec:premiseTypeRules}
