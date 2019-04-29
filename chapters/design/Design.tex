@@ -292,21 +292,25 @@ Additionally it will generate an infer function since there is now the possibili
 \end{figure}
 
 So far we have only discussed in detail type rules without premises.
-However, for us to be able to type check and traverse the whole abstract syntax tree given to us by a parser we need to generate code that uses premises.
-For example, if we use the natural deduction rule given in \autoref{fig:ifExprTypeRule}, the type rule we write in JET will need to represent the premises given in this type rule.
-The code we generate will also want to call the code that checks all of the premises given for the type rule.
-Considering the code snipped for STLC \texttt{if iszero 0 then pred 0 else pred (pred 0)} we get the proof tree seen in \autoref{fig:proofTree}.
-We can see that the method of proving a sentence in a language is through recursive application of type rules until we reach a type rule that has no premises causing the proof to terminate, in this case the literal integer type rule acts as our base case for all of our premises.
-The type rules we have already discussed are able to act as base cases to the recursive nature of type checking that we wish to generate code for.
+However, to be able to type check and traverse the whole abstract syntax tree given to JET by a parser, it needs to generate code that uses premises.
+For example, if given the natural deduction rule given in \autoref{fig:ifExprTypeRule}, the type rule in JET will need to represent the premises given in this type rule.
+The code JET generates will also want to call the code that checks all of the premises given for the type rule.
+Considering the code snipped for STLC, \texttt{if iszero 0 then pred 0 else pred (pred 0)}, its proof tree can be seen in \autoref{fig:proofTree}.
+The method of proving a sentence in a language is through recursive application of type rules until it reaches a type rule that has no premises causing the proof to terminate.
+In this case the literal integer type rule acts as the base case for all of the premises.
+The type rules that have already discussed are able to act as base cases to the recursive nature of type checking that we wish to generate code for.
 Therefore, the code we wish to generate for type premises will need to replicate this recursive nature we desire.
 
 Type premises have a similar syntax to type consequents.
-More information that is required for a type premise, namely the context which the type premise is meant to be proved with respect to, for now we will be looking at type rules that do not interact with the context (go to \autoref{sec:context} to see type rules that interact with the context).
-This gives means the general form of the type premise is:
+More information that is required for a type premise.
+Namely the context which the type premise is meant to be proved with respect to.
+For now we will be looking at type rules that do not interact with the context (go to \autoref{sec:context} to see type rules that interact with the context).
+This gives the general form of a type premise to be:
 \begin{grammar}
 <TypePremise> ::= <InlineHaskell> `|-' `(' <Identifier> <Identifier> `)' [`:' <Type>]
 \end{grammar}
-Here, the first $Identifier$ is the type of the AST node for the premise; the second $Identifier$ is the variable that the premise is meant to check; $:\ Type$ is the optional type that is associated with the type premise.
+Here, the first $Identifier$ is the type of the AST node for the premise; the second $Identifier$ is the variable that the premise is meant to check.
+ $:\ Type$ is the optional type that is associated with the type premise.
 We are now in a position to write a JET type rule for our type rule given in \autoref{fig:ifExprTypeRule}:
 \begin{lstlisting}
 typerule IfExpr <- if {ctx} |- (Expr e1) : TBool, 
@@ -314,13 +318,14 @@ typerule IfExpr <- if {ctx} |- (Expr e1) : TBool,
         {ctx} |- (Expr e3) : t then 
     (Expr If e1 e2 e3) : t return {Succ ()}
 \end{lstlisting}
-We can see that a type premise list is a comma separated sequence of type premises.
-This also the first time we have seen a JET type variable being used in a type rule.
+A type premise list in JET is a comma separated sequence of type premises.
+This is the first occurrence of a type variable being used in a type rule.
 There are a few sematic rules about type variables.
-If we have said that the type of a premise is a type variable and this is the first occurrence of the type variable then we will be generating an infer function to get the value that the type variable is to represent.
-Again, if we have said that the type of a premise is a type variable, but this time we have seen the type variable we will generate a check function where the type to check is the already defined type variable, this is to assert the two type variables are consistent.
-Finally, if we use a type variable in the consequent then the variable should have been defined some where in the type premises.
-From this set of rule we end up generating the following code:
+If the user has said that the type of a premise is a type variable, and this is the first occurrence of the type variable then JET will generate a call to an infer function to get the value that the type variable is to represent.
+Again, if the user haskell said that the type of a premise is a type variable, but this time JET has seen the type variable then it will generate a check function where the type to check is the already defined type variable.
+This is to assert the two type variables are consistent.
+Finally, if the user uses a type variable in the consequent then the variable should have been defined somewhere in the type premises.
+From this set of rule JET ends up generating the following code:
 \begin{lstlisting}
 checkExpr (If e1 e2 e3) jetCheckType ctx = do
     var1 <- checkExpr e1 TBool ctx
@@ -333,8 +338,9 @@ inferExpr (If e1 e2 e3) jetCheckType ctx = do
     var2 <- checkExpr e3 ctx
     Succ t
 \end{lstlisting}
-As can be seen, the final line of both functions are similar to the bodies of functions that we have seen that did not have type premises.
-The other thing to notice, is that the code generated for the type premises appears in both of our generated functions, this is because in both instances we need to prove premises otherwise anything we state about the consequent could be incorrect.
+As can be seen above, the final line of both functions are similar to the bodies of functions that we have seen that did not have type premises.
+The other key point to note, is that the code generated for the type premises appears in both of our generated functions.
+This is because, in both instances, it needs to prove premises otherwise anything we state about the consequent could be incorrect.
 Premises are evaluated in the order of left to right in the premise list, and the return value from check functions is stored in a variable with name $var_n$ where n is the next free natural number such that the variable name is unique.
 
 \subsubsection{Type Variables as Parameters to Type Constructors}
@@ -366,9 +372,10 @@ Premises are evaluated in the order of left to right in the premise list, and th
     \label{fig:complicatedTypeRules}
 \end{figure}
 
-We can also use type variables as parameters to the constructor of a full type definition.
-Such examples of these types are array types in the Ad language, and a function type for STLC.
-All elements in an array, in Ad, are all of the same type, therefore the type rule getting an element of the array will need to extract the type of the elements of the array.
+Jet can also use type variables as parameters to the constructor of a full type definition.
+Examples of these types are array types in the Ad language, and a function type for STLC.
+All elements in an array, in Ad, are all of the same type.
+Therefore the type rule for accessing an element of the array will need to extract the type of the elements of the array.
 In the natural deduction rules this is trivial, you represent arrays as $Arr~\tau$ where $\tau$ is the type of the elements of the array.
 We can use a similar form of representing such types in JET.
 For example, the type rule for array access in Ad is seen in \autoref{fig:typeRuleArrAccess}.
@@ -376,37 +383,38 @@ We can write the first type premise in JET in almost exactly the same way:
 \begin{lstlisting}[numbers=none]
 {ctx} |- (Expr e) : TArr t 
 \end{lstlisting}
-From this we can to generate some code of the form:
+From this JET generates code of the form:
 \begin{lstlisting}[numbers=none]
 TArr t <- inferExpr e ctx
 \end{lstlisting}
-This code asserts that the type returned from the infer function must be an array type, we then get the parameter of the array type and store it in some variable t.
+This code asserts that the type returned from the infer function must be an array type, the generator then gets the parameter of the array type and stores it in some variable t.
 The generator will also have to add the variable t to the list of known type variables so that if another premise required the use of this type variable then we can generate a check function instead of an infer function.
 There is one issue with the code that we generate at the moment.
-If the return of the infer function does not match the pattern function then the type checker will error, but not with our defined error function since the error was an internal Haskell error.
-Instead the right hand side of the binding will want to call our error function in case of a bad pattern match, from this criteria we produce the follow code:
+If the return of the infer function does not match the pattern function then the type checker will error, but not with the defined error function since the error was an internal Haskell error.
+Instead the right hand side of the binding will want to call our error function in case of a bad pattern match, from this criteria the generator produces the follow code:
 \begin{lstlisting}[numbers=none]
 TArr t <- case inferExpr e ctx of Succ jet0@(TArr t) -> Succ jet0; Succ t -> Fail (makeInferError t t); x -> x
 \end{lstlisting}
 
 \subsubsection{Side Conditions as Premises'}
 \label{sec:scond}
-There is another example of such a type rule, but instead this is part of STLC, can be seen in \autoref{fig:typeRuleFix}.
-As can be seen there is the type $\tau \rightarrow \tau$ where both instances of $\tau$ are the same.
+There is another example of such a type rule, but instead as part of STLC, that can be seen in \autoref{fig:typeRuleFix}.
+There is the type $\tau \rightarrow \tau$ where both instances of $\tau$ are the same.
 We would like to write the type premise as:
 \begin{lstlisting}[numbers=none]
 {ctx} |- (Expr e) : TFun t t
 \end{lstlisting}
-Where we assert that both instances of \texttt{t} are the same.
-However the code we generate for this is not correct as we do not assert that both instances of \texttt{t} are the same, instead \texttt{t} is always the value of the second parameter to the type constructor.
-Therefore, we write the type premise as:
+Where this type premise asserts that both instances of \texttt{t} are the same.
+However the code that is generated for this is not correct as it does not assert that both instances of \texttt{t} are the same, instead \texttt{t} is always the value of the second parameter to the type constructor.
+Therefore, the type premise is written as:
 \begin{lstlisting}[numbers=none]
 {ctx} |- (Expr e) : TFun t1 t2
 \end{lstlisting}
-We also write a side condition premise such that asserts that \texttt{t1} and \texttt{t2} are the same and creates a new type variable \texttt{t} which is the same as \texttt{t1} and \texttt{t2}.
-A side condition premise is piece of inline Haskell that is inserted into the generated code as a monadic statement, the used of the side conditions can be extremely varied in functionality and can do anything that the user requires that cannot be done as part of normal type premises.
+A side condition premise is also written such that it asserts that \texttt{t1} and \texttt{t2} are the same.
+A side condition premise is piece of inline Haskell that is inserted into the generated code as a monadic statement
+The use of the side conditions can be extremely varied in functionality and can do anything the user requires that cannot be done as part of normal type premises.
 One of the major uses of Haskell side conditions is for retrieving or expanding the context that we will see in \autoref{sec:context}.
-Giving us the full type rule as follows:
+From this the type rules is written as follows:
 \begin{lstlisting}
 typerule Fix <- if {ctx} |- (Expr e) : TFun t1 t2, 
         {if t1 == t2 then Succ t1 else Fail "type error"} then 
@@ -414,34 +422,35 @@ typerule Fix <- if {ctx} |- (Expr e) : TFun t1 t2,
 \end{lstlisting}
 
 \section{List Notation Type Rules}
-Many languages, in their abstract syntax, have nodes that take a list of nodes to be one of their children, an example of this can be seen as a sequence of statements that make up the body of a procedure or function as part of the Ad language in \autoref{appendix:witnessLanguages}.
-In the set of features discussed there is no simple way to represent type rules that act on these kinds of nodes.
+Many languages, in their abstract syntax, have nodes that take a list of nodes to be one of their children (an example of this can be seen as a sequence of statements that make up the body of a procedure or function as part of the Ad language in \autoref{appendix:witnessLanguages}).
+In the set of features discussed, there is no simple way to represent type rules that act on these kinds of nodes.
 
 \subsection{List Notation in Type Premises}
 Using list notation in type premises is similar to how normal type premises are used.
-The one difference is instead of encasing the premise with parentheses, we instead encase it within square brackets.
-This so that it matches how lists are defined in Haskell, therefore, the users should be familiar with square brackets being associated with lists.
+The difference is, instead of encasing the premise with parentheses, it is instead encased within square brackets.
+This so that it matches how lists are defined in Haskell, therefore, the user should be familiar with square brackets being associated with lists.
 The example for the list of statements is given as \texttt{\{ctx\} |- [Stmnt stmnts]}.
-As can be seen it is exactly the same is a normal type premise, with only the type of brackets used being different so that both the user and the tool can tell the difference.
+This is exactly the same as a normal type premise, with only the type of brackets used different, so that both the user and the tool can tell the difference.
 The code that is produced from this type of premise is also very similar to the code produced from a normal premise: \texttt{var1 <- checkStmntList stmnts ctx}.
 How the parameters are passed, along with how the result of the premise is bound to a variable, is exactly the same.
 The only difference being is the function name has \texttt{List} as a suffix.
 If we did not have this suffix then we would call \texttt{checkStmnt} which would lead to a type error as \texttt{checkStmnt} has the type: \texttt{Stmnt -> Context -> JetError a}, whereas the function we are trying to call would have to have type: \texttt{[Stmnt] -> Context -> JetError a}.
-The difference being, one expects a statement, the other expects a list of statements.
+The difference being that, one expects a statement whilst the other expects a list of statements.
 
 \subsection{List Notation Type Rules}
-We have discusses how list notation is used in premises, however, that is not useful unless code can be generated for type rules using list notation.
+We have discussed how list notation is used in premises.
+However, that is not useful unless code can be generated for type rules using list notation.
 Type rules for list notation bear a resemblance to normal type rules.
 They have different semantics for the consequent but the type premises have the same semantics we have previously discussed.
-Similarly to premises, instead of being encased in parentheses they are encased in square brackets.
+Similarly to premises, instead of being encased in parentheses, they are encased in square brackets.
 The major differences occur in the variables that are defined within the rule and what semantic meaning they have.
-The simplest form is to just define the Node type and nothing else, for example: \texttt{[Stmnt]}.
-This will pattern match on the empty list, in this case, when all statements have been successfully type checked.
-The next pattern has the Node type and a variable name, given as: \texttt{[Stmnt s]}.
-The pattern matched on the singleton list, where the element with in the list is given the variable name given in the type rule.
-The final pattern that exists is the list constructor pattern, this, similar the the last two,  is given as the Node type but now followed by two variable names.
+The simplest form is to just define the node type and nothing else, for example: \texttt{[Stmnt]}.
+This will pattern match on the empty list, in this case when all statements have been successfully type checked.
+The next pattern has the node type and a variable name, given as: \texttt{[Stmnt s]}.
+This pattern will match on the singleton list, where the element within the list is given the variable name in the type rule.
+The final pattern that exists is the list constructor pattern, this is given as the node type but is now followed by two variable names.
 The first variable represents the head of the list to be type checked (the first item), the second variable represents the tail of the list to be type checked (The rest of the list after the head has been removed).
-The variables in these type rules can be used the in the premises the same as any other variables.
+The variables in these type rules can be used the in the premises, the same as any other variables.
 
 \begin{figure}
     \begin{prooftree}
@@ -454,9 +463,9 @@ The variables in these type rules can be used the in the premises the same as an
     \label{fig:StmntListTypeRule}
 \end{figure}
 
-An example of how to define a type rule in list notation is when type checking a list of statements.
+A example of how to define a type rule in list notation is when type checking a list of statements.
 The type rule in natural deduction logic can be seen in \autoref{fig:StmntListTypeRule}.
-The premises in this type rule make a recursive type rule, and our the type rule in JET will have to reflect this meaning.
+The premises in this type rule make a recursive type rule, and the type rule in JET will have to reflect this meaning.
 In the scenario given, the list statements must non-empty, we can create type rules that assert that the non-empty property must hold.
 
 \begin{lstlisting}[caption = Type rule in JET for a seqeunce of statements, label=lst:jetStmntList]
@@ -467,23 +476,24 @@ typerule StmntListSngltn <- if {ctx} |- (Stmnt stmnt),
     then [Stmnt stmnt] return {Succ ()};
 \end{lstlisting}
 
-We therefore have the the type rule in JET that can be seen in \autoref{lst:jetStmntList}.
-As can be seen to create the behavior we desire need two type rules, one for when we have a list arbitrary length, and another for when the list contains a single item.
+We therefore have the type rule in JET that can be seen in \autoref{lst:jetStmntList}.
+As demonstrated to create the behaviour that is desired, two type rules are needed, one for when the list is of arbitrary length, and another for when the list contains a single item.
 This structure forces the list to be nonempty and the type checker will error if the list happens to be empty.
-Another important aspect to note is that we can recursively call out same type rule in order to type check the while list.
-This can be seen in the list constructor type rule where we type check the current statement but then also go on to type check the rest of the list.
+Another important aspect to note is that we can recursively call the same type rule in order to type check the while list.
+This can be seen in the list constructor type rule, where the current statement is type checked but then also go on to type check the rest of the list.
 These patterns should be able to handle any usual type rule that a user is going to write.
-However they do not cover every possible pattern that could occur as they do not replicate how Haskell does pattern matching on lists but instead uses a subset of the patterns that Haskell has available.
-It could be possible in future to expand these patterns so that they do match all of the patterns that Haskell can handle, however we did not require this feature to type check the witness languages given.
+However, they do not cover every possible pattern that could occur as they do not replicate how Haskell does pattern matching on lists but instead uses a subset of the patterns that Haskell has available.
+It could be possible, in future, to expand these patterns so that they do match all of the patterns that Haskell can handle however, we did not require this feature to type check the example languages given.
 
 \section{Interacting with the Context}
 \label{sec:context}
 Using side conditions to update and lookup items within the context is very common when specifying the natural deduction rules.
-We have discussed in \autoref{sec:scond} how side conditions work in JET and how the code is generated for them.
-To make interacting with the context through Haskell side conditions easier and more consistent, there is a Haskell type class that has been provided to the user to give them a common interface to interact with the context\footnote{The definition of this type class (called \texttt{JetContext}) is provided in ref to haskell modules!!!!!!!!}.
-It is important to note that these modules do not define the context for the user, the user will have to define their own context type and instantiate the Haskell type class for their own context type.
+We have discussed in \autoref{sec:scond} how side conditions work in JET, and how the code is generated for them.
+To make interacting with the context, through Haskell side conditions, easier and more consistent, there is a Haskell type class that has been provided to the user to give them a common interface to interact with the context\footnote{The definition of this type class (called \texttt{JetContext}) is provided in \autoref{appendix:modules}}.
+It is important to note that these modules do not define the context for the user; the user will have to define their own context type and instantiate the Haskell type class for their own context type.
 This is because many different languages can have contexts that work differently and letting the user define their own context gives them greater control on the semantics of the context.
-There is an example provided to the user of how to do this using Haskell Data Maps\cite{haskelldatamap} so that the user is not on their own in this regard, the name of the type for this example is \texttt{JetContextMap}.
+There is an example provided to the user of how to do this using Haskell Data Maps\cite{haskelldatamap}.
+The name of the type for this example is \texttt{JetContextMap}.
 The semantics of the each function will be explained using the provided example.
 
 \subsection{Empty Contexts and Blocks}
@@ -504,10 +514,11 @@ The basic thing you can do with a context is create an empty context or add a ne
 An empty context should do exactly what the name suggests, it should be a new context that has no items in it.
 Since the user implements all the functions they should ensure that their function meets these semantic requirements.
 There is an assumption that all languages will have a block structure even if that block structure is trivial, and if a language is not a block structured language it can be modelled by having a context which will only ever have one block.
-How the context represents blocks is up to the user, however in our \texttt{JetContextMap} example a single block is a map and our context is made up of a list of blocks.
-The reason for this is simple, consider the Ad program given in \autoref{lst:blockDecl}.
+How the context represents blocks is up to the user.
+However in our \texttt{JetContextMap} example a single block is a map and our context is made up of a list of blocks.
+The reason for this is simple; consider the Ad program given in \autoref{lst:blockDecl}.
 We want to be able to re-declare variables as long as the variable to re-declare does not exist in the current block.
-If the context was just a single map then there would be no way of knowing whether or not a variable was declared in the current block, we would only be able to know if a variable was declared in any block.
+If the context was just a single map then there would be no way of knowing whether or not a variable was declared in the current block; we would only be able to know if a variable was declared in any block.
 This gives us the formal definition of the context to be a sequence of functions which maps names to types given as $\langle Name \rightarrow Type \rangle$
 
 \begin{figure}[]
@@ -524,7 +535,7 @@ This gives us the formal definition of the context to be a sequence of functions
 These functions can be used anywhere inline Haskell can be used.
 However, they will most likely be used in the context definition for type premise's.
 An example of natural deduction rule defining a new block for the Ad language can be seen in \autoref{fig:typeRuleBlock}.
-Our first premise states, given a sequence containing an empty set (conceptual a mapping of names to types containing nothing), concatenated with our current context check our declarations.
+The first premise states, given a sequence containing an empty set (conceptual a mapping of names to types containing nothing), concatenated with our current context, check our declarations.
 The second premise states check the statements of the block given a new block containing all of our declarations concatenated with the current context.
 The following type rule in JET represents this natural deduction rule:
 \begin{lstlisting}
@@ -532,10 +543,10 @@ typerule BlockT <- if {(newBlock ctx)} |- [Decl decls],
         {var1} |- [Stmnt stmnts] then
     (Stmnt SBlock decls stmnts) return {Succ ()};
 \end{lstlisting}
-We use \texttt{var1} for the context to the second premise because \texttt{var1} is the context returned from the first premise which has all of the declarations added to the context.
+\texttt{var1} is used for the context in the second premise because \texttt{var1} is the context returned from the first premise which has all of the declarations added to the context.
 This is required so that those declarations are visible to the statements in the block.
 
-\subsection{Lookup, Expand}
+\subsection{Lookup and Expand}
 \begin{figure}[]
     \centering
     \begin{subfigure}{1\textwidth}
@@ -573,23 +584,24 @@ This is required so that those declarations are visible to the statements in the
     \label{}
 \end{figure}
 
-The most common use of the context is when attempting to retrieve types of objects from the context.
-We will want to do two main actions with variables, the first is to retrieve the type of a variable from the context, the second is to add a new variable with a given type to the context.
+The most common use of the context is when attempting to retrieve types of objects from it.
+We will want to do two main actions with variables, the first is to retrieve the type of a variable from the context; the second is to add a new variable with a given type to the context.
 Retrieving the type of a variable from the context is given by the natural deduction rule in \autoref{fig:varTypeRule}.
 The consequent is trivial and is the same as the ones we have seen throughout \autoref{sec:basisTypeRules}.
 We still need to retrieve the arbitrary type $\tau$ from the context.
-this can be done by using the function, given by the \texttt{JetContext} type class, \texttt{lookupContext}.
+This can be done by using the function, given by the \texttt{JetContext} type class, \texttt{lookupContext}.
 This function, given some a parameter to identify the item in the context (such as the variable name), will return the type associated with the input, or will return some fail message within the \texttt{JetError} monad.
 When using this in a Haskell side condition we will want to bind the resulting type from the context to the variable that we are going to use as the type for the consequent.
 If we say that the return variable of the consequent is \texttt{t}, then we will want to write the side condition as \texttt{\{t <- lookupContext var ctx\}}, where \texttt{var} is the variable to lookup and \texttt{ctx} is the given context to perform the lookup in.
-We do not do anything special when generating the code from a Haskell side condition, we simply put it directly into the generated code in the position it occurs in the premise list (In this example it is the only premise so that does not matter just as long as it appears before the return monadic statement).
+When generating the code from a Haskell side condition, it is simply put directly into the generated code in the position it occurs in the premise list (In this example it is the only premise so that does not matter just as long as it appears before the return monadic statement).
 
-We can now retrieve types from the context, however, that is not useful unless we can add objects to the context.
-We will be using the example that can be seen in \autoref{fig:varDeclTypeRule} taken from the Ad language.
+Now types can be retrieved from the context.
+However, that is not useful unless objects can be added to the context.
+We will be using the example that can be seen in \autoref{fig:varDeclTypeRule}, taken from the Ad language.
 The type rule has a very complicated predicates for the new context and also for the side condition for the type rule.
 However, the functionality can be encoded into the \texttt{expandContext} function.
-The \texttt{expandContext}, takes as parameters the object, the type to associate with the object, and the context to add the object to.
-The function will return an error monad, therefore if the function is successful it will return the new context otherwise it will return an error.
+The \texttt{expandContext} functions takes as parameters the object, the type to associate with the object and the context to add the object to.
+The function will return a monad which can contain either the new context or an error, where if successful it will return the new context otherwise it will return an error.
 If we were to then use this function to write the natural deduction rule again we would get the rule given in \autoref{fig:modvarDeclTypeRule}.
 
 The new version of the natural deduction rule is now much easier to write in JET because we can use the function from our type class.
@@ -597,8 +609,9 @@ We write the type rule in JET as the following:
 \begin{lstlisting}[numbers=none]
 typerule VDeclT <- (VarDecl VDecl var t) return {expandContext var t ctx};
 \end{lstlisting}
-There is no need for the premise in our JET type rules as we write that using the list notations, this type rule is simply to add the variable to the context therefore we need to return the new context which has been expanded with the variable rather than returning the Unit type that we have seen in every other type rule so far.
-The code we produce for this is similar to the typeless type rules seen in \autoref{sec:tltr} but with the expand function in place of \texttt{Succ ()}:
+There is no need for the premise in our JET type rules as we write that using the list notations.
+This type rule is simply to add the variable to the context therefore we need to return the new context which has been expanded with the variable rather than returning the Unit type that we have seen in every other type rule so far.
+The code we produce for this is similar to the typeless type rules seen in \autoref{sec:tltr}, but with the expand function in place of \texttt{Succ ()}:
 \begin{lstlisting}[numbers=none]
 checkVarDecl (VDecl var t) ctx = do
     expandContext var t ctx
@@ -616,35 +629,39 @@ checkVarDecl (VDecl var t) ctx = do
     \label{fig:typeRuleFunc}
 \end{figure}
 
-Name-spaces are not directly supported in the JET language, as they are in typical\cite{grimm2007typical}.
+Name-spaces are not directly supported in the JET language, as they are in Typical\cite{grimm2007typical}.
 They are a common construct in programming languages and a useful way of splitting the context into multiple parts.
-This means that in JET, we can have variable, a function, a procedure and type all have the same name but we can figure out which one we mean based upon when it is being used.
-For example, in the Ad language we will want to have multiple name-spaces, one for variables, one for functions and one for procedures and a final one for type definitions.
-Where as in the STLC we only have one name-space for variables.
+This means that in JET, we can have a variable, a function, a procedure and a type synonym with the same name but we can figure out which one we mean based upon when it is being used.
+For example, in the Ad language we will want to have multiple name-spaces; one for variables, one for functions, one for procedures and a final one for type definitions.
+Whereas, in the STLC, we only have one name-space for variables.
 For our Ad language we need to construct our context in such a way that we can have all of the name-spaces we require.
-We do this using a 4-tuple where the items for variables, functions and procedures are the block structures we discussed in \autoref{sec:blocks}, where as our structure for type definitions is just a map because types can only be defined at the start of the program.
-The formal definition for the current context we require for Ad is $(V, P, F, T)$ where $V$ is the variables, $P$ is the procedures, $F$ is the functions and $T$ are the type definitions, however $\Gamma$ will still be used to denote the whole context.
-Therefore is we are trying to type check a function call we will get the natural deduction rule given in \autoref{fig:typeRuleFunc}.
-If we are using the context definition for Ad, in \autoref{appendix:witnessLanguages}, then we would be able to write this type rule in JET, using list notation to get the types of the parameters, as:
+We do this using a 4-tuple where the items for variables, functions and procedures are the block structures we discussed in \autoref{sec:blocks}.
+Whereas our structure for type definitions is just a map because types can only be defined at the start of the program.
+The formal definition for the current context we require for Ad is $(V, P, F, T)$ where $V$ is the variables, $P$ is the procedures, $F$ is the functions and $T$ are the type definitions.
+However $\Gamma$ will still be used to denote the whole context.
+Therefore, while trying to type check a function call, we will get the natural deduction rule given in \autoref{fig:typeRuleFunc}.
+If we are using the context definition for Ad (in \autoref{appendix:witnessLanguages}) then we would be able to write this type rule in JET, using list notation to get the types of the parameters, as:
 \begin{lstlisting}
 typerule FCallT <- if {ctx} |- [Expr params] : tparams, 
         {t <- lookupContext (Func ident tparams) ctx} then 
     (Expr ECall ident params) : t return {Succ ()};
 \end{lstlisting}
-The Haskell side condition used here is very similar to the one that was shown previously when descibing how the function \texttt{lookupContext} works and how it is meant to be used.
-This time however, the first parameter has a different form.
-In this case it has the form of the name-space which we want to look for the object in followed by the object that we wish to fine, in this example the object is the identifier of the function and the types of the parameters to the function.
-Therefore, \texttt{ident tparams} is analogous to $(f, \tau_{params})$ in the natural deduction rule, and we give the whole context to the function and we let the function decide what name-space to look in based upon the pattern of the first argument, i.e. what constructor is used for the first argument, in this case it is the \texttt{Func}, from the type:
+The Haskell side condition used here is very similar to the one that was shown previously when describing how the function \texttt{lookupContext} works.
+However, this time the first parameter has a different form.
+In this case it has the form of the name-space which we want to look for the object in.
+This is followed by the object that we wish to find, here the object is the identifier of the function and the types of the parameters to the function.
+Therefore, \texttt{ident tparams} is analogous to $(f, \tau_{params})$ in the natural deduction rule.
+So we give the whole context to the function and we let the function decide what name-space to look in based upon the pattern of the first argument (i.e. what constructor is used for the first argument) in this case it is the \texttt{Func}, from the type:
 \begin{lstlisting}[numbers=none]
 data ContextKey = Ret | Proc Ident [Type] | Func Ident [Type] | Var Ident | Typ Ident
     deriving (Eq, Ord, Show, Read)
 \end{lstlisting}
-This type is what is used as the "key" type for the \texttt{JetContext} instance for the custom type used for the context for the Ad language.
-The type here has one more item in the tuple that we didn't initially give in our formal definition of the Ad context and that is the constructor \texttt{Ret}.
+This is the type that is used to access the context.
+The type here has one more item in the tuple that we didn't initially give in our formal definition of the Ad context, that is the constructor \texttt{Ret}.
 That item is used to denote the current return type of the current subprogram we are in.
-This means the new formal definition for the context for the Ad language is a 5-tuple given as $(\tau_{ret}, V, P, F, T)$ where the variables that existed previously mean the same and $\tau_{ret}$ denotes the current return type.
-This piece of information is required so that return statement can be correct type checked when it is used.
-This can be used by the \texttt{lookupContext} and \texttt{expandContext} functions just like the other constructors for that type, the only difference is the constructor does not require any parameters which means we can write the type rule for the return statement to be:
+This means the new formal definition for the context for the Ad language is a 5-tuple given as $(\tau_{ret}, V, P, F, T)$ where the variables that existed previously retain their definition and $\tau_{ret}$ denotes the current return type.
+This piece of information is required so that return statement can be correctly type checked when it is used.
+This can be used by the \texttt{lookupContext} and \texttt{expandContext} functions, just like the other constructors for that type, the only difference is the constructor does not require any parameters this means we can write the type rule for the return statement to be:
 \begin{lstlisting}
 typerule ReturnT <- if {ctx} |- (Expr e) : t, 
         {tret <- lookupContext Ret ctx}, 
